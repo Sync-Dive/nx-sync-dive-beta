@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N-X Supply Depot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body id="shop-screen">
+
+  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:1rem; margin-bottom:1rem;">
+      <h2 style="margin:0; color:#38bdf8;">SUPPLY DEPOT</h2>
+      <button class="secondary-btn" onclick="window.location.href='map.html'">BACK TO MAP</button>
+  </div>
+
+  <div style="display:flex; gap:15px; margin-bottom:2rem; justify-content:center;">
+      <div class="currency energy">⚡ <span id="energy-amt">--</span></div>
+      <div class="currency prisma">💎 <span id="prisma-amt">--</span></div>
+      <div class="currency aurum">🪙 <span id="aurum-amt">--</span></div>
+  </div>
+
+  <div id="shop-items">
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-title">WATCH AD</div>
+        <div class="shop-item-cost">Reward: +3 Energy</div>
+      </div>
+      <button class="primary-btn" onclick="doAction('watchAd')">WATCH</button>
+    </div>
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-title">RECHARGE CELL</div>
+        <div class="shop-item-cost">Cost: 50 Prisma</div>
+        <div style="font-size:0.7rem; color:#64748b;">+1 Energy</div>
+      </div>
+      <button class="primary-btn" onclick="doAction('buyEnergy')">BUY</button>
+    </div>
+
+    <div class="shop-item">
+      <div>
+        <div class="shop-item-title">PRISMA CACHE</div>
+        <div class="shop-item-cost">Cost: 1 Aurum</div>
+        <div style="font-size:0.7rem; color:#64748b;">+100 Prisma</div>
+      </div>
+      <button class="primary-btn" onclick="doAction('convertAurum')">CONVERT</button>
+    </div>
+
+  </div>
+
+  <script src="economy.js"></script>
+  <script>
+    function updateUI() {
+      economy.regenerateEnergy();
+      document.getElementById("energy-amt").textContent = economy.getEnergy();
+      document.getElementById("prisma-amt").textContent = economy.getPrisma();
+      document.getElementById("aurum-amt").textContent = economy.getAurum();
+    }
+
+    function doAction(action) {
+        let result = false;
+
+        if (action === 'watchAd') {
+            // Mock Ad
+            alert("Watching Ad... (Imagine a 30s video here)");
+            result = economy.watchAdForEnergy();
+            if(result) alert("Thank you! +3 Energy received.");
+        } 
+        else if (action === 'buyEnergy') {
+            result = economy.buyEnergyWithPrisma();
+            if(result) alert("+1 Energy added!");
+            else alert("Not enough Prisma!");
+        } 
+        else if (action === 'convertAurum') {
+            result = economy.exchangeAurumToPrisma();
+            if(result) alert("Conversion successful! +100 Prisma.");
+            else alert("Not enough Aurum!");
+        }
+
+        updateUI();
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
