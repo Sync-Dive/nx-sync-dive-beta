@@ -387,3 +387,20 @@ img {
 
 #end-box button { width: 100%; padding: 0.5rem; margin-top: 0.35rem; border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
 #end-box button:hover { background: rgba(255,255,255,0.15); }
+/* --- UI/UX FIX: Distinct Tile Colors --- */
+/* Aelia (Type 0) - Default Blueish */
+.glyph-type-0 { filter: hue-rotate(0deg) brightness(1.1); }
+
+/* Nocta (Type 1) - Purple/Pink */
+.glyph-type-1 { filter: hue-rotate(90deg) brightness(1.2); }
+
+/* Vyra (Type 2) - Red/Orange */
+.glyph-type-2 { filter: hue-rotate(180deg) sepia(0.3); }
+
+/* Iona (Type 3) - Green/Teal */
+.glyph-type-3 { filter: hue-rotate(270deg) contrast(1.2); }
+
+/* Make them pop more */
+.tileIcon {
+    transition: transform 0.2s;
+}

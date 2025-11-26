@@ -1,22 +1,19 @@
-/* board.js — FINAL BALANCE PATCH (Damage 50) */
+/* board.js — DAMAGE TUNED (25) */
 (function () {
   const GS = window.gameState || (window.gameState = {});
 
-  // --- HELPERS ---
+  // --- HELPERS (Standard) ---
   function randInt(n) { return Math.floor(Math.random() * n); }
   function makeGlyphCell(type) { return { kind: "glyph", type }; }
-  
   function isGlyph(cell) { return cell && cell.kind === "glyph"; }
   function isPoison(cell) { return cell && cell.kind === "poison"; }
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
   function isJunk(cell) { return cell && cell.kind === "junk"; }
   function isLava(cell) { return cell && cell.kind === "lava"; }
-  
   function isHazard(cell) { return (isPoison(cell) || isFrozen(cell) || isJunk(cell) || isLava(cell)); }
   function isEmpty(cell) { return cell == null; }
   function canFall(cell) { return cell && !isHazard(cell); } 
 
-  // Exports
   window.isGlyph = isGlyph; window.isPoison = isPoison; window.isFrozen = isFrozen;
   window.isJunk = isJunk; window.isLava = isLava; window.isEmpty = isEmpty;
 
@@ -156,17 +153,15 @@
     if(g.length) { const [rr,cc] = g[randInt(g.length)]; GS.board[rr][cc] = {kind:"lava"}; }
   }
 
-  // --- MAIN RESOLVE LOOP ---
+  // --- RESOLVE ---
   async function resolveMatchesOnceAndRefill() {
     const matches = findAllMatches();
     if (Object.keys(matches).length === 0) return false;
 
     const matchCount = Object.keys(matches).length;
     if (window.Abilities && window.Abilities.applyHeroDamage) {
-        // --- BALANCE CHANGE HERE ---
-        // WAS: 20 -> Too weak for 3000 HP
-        // NEW: 50 -> Perfect sweet spot
-        const dmg = matchCount * 50; 
+        // BALANCE UPDATE: 25 Damage per tile
+        const dmg = matchCount * 25; 
         window.Abilities.applyHeroDamage("board", dmg); 
         
         GS.aeliaCharge = Math.min(10, GS.aeliaCharge + (matchCount > 3 ? 2 : 1));

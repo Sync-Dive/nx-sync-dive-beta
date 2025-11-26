@@ -1,20 +1,16 @@
-/* ui.js — FIXED FALLBACK PATHS */
+/* ui.js — VISUAL UPDATES */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const IS_GAME = window.location.pathname.includes("game.html");
-
   function el(id) { return document.getElementById(id); }
 
   const TILE_IMAGES = [
     "assets/tile_aelia.png", "assets/tile_nocta.png",
     "assets/tile_vyra.png",  "assets/tile_iona.png"
   ];
-
   const HAZARD_IMAGES = {
-    frozen: "assets/tile_deceit.png",
-    poison: "assets/tile_plague.png",
-    junk:   "assets/tile_greed.png",
-    lava:   "assets/tile_war.png"
+    frozen: "assets/tile_deceit.png", poison: "assets/tile_plague.png",
+    junk:   "assets/tile_greed.png",  lava:   "assets/tile_war.png"
   };
 
   if (IS_GAME) {
@@ -31,18 +27,14 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
-        updateEnergyUI();
-        updatePrismaUI();
+        updateEnergyUI(); updatePrismaUI();
         if(GS.board) renderBoard();
       }, 50);
     });
   } else {
-    // Map/Shop dummy
     window.UI = window.UI || {};
-    window.UI.updateEnergyUI = function(){};
-    window.UI.updateStats = function(){};
-    window.UI.renderBoard = function(){};
-    window.renderBoard = function(){};
+    window.UI.updateEnergyUI = function(){}; window.UI.updateStats = function(){};
+    window.UI.renderBoard = function(){}; window.renderBoard = function(){};
     return; 
   }
 
@@ -50,7 +42,6 @@
     const gridEl = el("game-grid");
     if (!GS.board || !gridEl) return;
     const N = GS.GRID_SIZE;
-
     gridEl.innerHTML = "";
 
     for (let r = 0; r < N; r++) {
@@ -59,11 +50,9 @@
         const cellEl = document.createElement("div");
         cellEl.className = "grid-cell tile3D";
         cellEl.id = `cell-${r}-${c}`;
-
         if (window.Input && window.Input.onCellPointerDown) {
           cellEl.addEventListener("pointerdown", (e) => window.Input.onCellPointerDown(e, r, c), { passive: false });
         }
-
         const content = document.createElement("div");
         content.className = "glyphContainer";
 
@@ -71,20 +60,18 @@
           const img = document.createElement("img");
           img.className = "tileIcon";
           
-          const _isFrozen = window.isFrozen || ((c)=>c.kind==='frozen');
-          const _isPoison = window.isPoison || ((c)=>c.kind==='poison');
-          const _isJunk   = window.isJunk   || ((c)=>c.kind==='junk');
-
-          if (_isFrozen(cell)) { img.src = HAZARD_IMAGES.frozen; cellEl.classList.add("frozenTile"); }
-          else if (_isPoison(cell)) { img.src = HAZARD_IMAGES.poison; cellEl.classList.add("poisonTile"); }
-          else if (_isJunk(cell)) { img.src = HAZARD_IMAGES.junk; cellEl.classList.add("junkTile"); }
+          if (cell.kind === "frozen") { img.src = HAZARD_IMAGES.frozen; cellEl.classList.add("frozenTile"); }
+          else if (cell.kind === "poison") { img.src = HAZARD_IMAGES.poison; cellEl.classList.add("poisonTile"); }
+          else if (cell.kind === "junk") { img.src = HAZARD_IMAGES.junk; cellEl.classList.add("junkTile"); }
           else if (cell.kind === "lava") { img.src = HAZARD_IMAGES.lava; cellEl.classList.add("lavaTile"); }
-          else if (cell.kind === "glyph") { img.src = TILE_IMAGES[cell.type] || "assets/tile_unknown.png"; }
+          else if (cell.kind === "glyph") { 
+              img.src = TILE_IMAGES[cell.type] || "assets/tile_unknown.png"; 
+              // UX FIX: Add type class for CSS coloring
+              img.classList.add(`glyph-type-${cell.type}`);
+          }
           
           img.onerror = function() { 
-            this.style.display='none'; 
-            this.parentNode.style.backgroundColor = '#333';
-            this.parentNode.innerText = '?';
+            this.style.display='none'; this.parentNode.style.backgroundColor = '#333'; this.parentNode.innerText = '?';
           };
           content.appendChild(img);
         }
@@ -94,6 +81,7 @@
     }
   }
 
+  // ... [Keep updateDiscipleBadge, updateChibiUI, updateStats, updateAbilityUI, updateEnergyUI, updatePrismaUI, flashAlert SAME AS BEFORE] ...
   function updateDiscipleBadge() {
     const badge = el("disciple-badge-live");
     const chibi = el("disciple-chibi-live");
@@ -102,16 +90,13 @@
     if (badge) badge.textContent = "Disciple: " + d.name;
     if (chibi) {
       chibi.src = "assets/disciple_" + d.id.toLowerCase() + ".jpg";
-      
-      // BETA FIX: Map attack types to actual filenames
       chibi.onerror = function() { 
           this.onerror = null; 
-          let fallback = "tile_greed.png"; // Default
+          let fallback = "tile_greed.png"; 
           if(d.attack === "poison") fallback = "tile_plague.png";
           if(d.attack === "drain")  fallback = "tile_war.png";
           if(d.attack === "deceit") fallback = "tile_deceit.png";
           if(d.attack === "greed")  fallback = "tile_greed.png";
-          
           this.src = "assets/" + fallback; 
       };
       chibi.style.display = "block";
@@ -195,10 +180,7 @@
     const p = el("prisma-count");
     const a = el("aurum-count");
     let pv = 0, av = 0;
-    if (window.economy) {
-        pv = economy.getPrisma();
-        av = economy.getAurum();
-    }
+    if (window.economy) { pv = economy.getPrisma(); av = economy.getAurum(); }
     if (p) p.textContent = pv;
     if (a) a.textContent = av;
   }
