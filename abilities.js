@@ -1,4 +1,4 @@
-/* abilities.js — FIXED GRAVITY & STABILITY */
+/* abilities.js — SCALED DAMAGE FOR NEW HP POOLS */
 (function () {
   const GS = window.GameState || window.gameState;
   const UI = window.UI;
@@ -16,8 +16,7 @@
     if(UI && UI.updateStats) UI.updateStats();
 
     if (GS.discipleHP <= 0) {
-      // Victory handled by Engine loop usually, but force check if needed
-      // window.Engine.handleVictory(); // Let the main loop handle it to avoid double triggers
+      // Victory handled by loop
     } else {
       if (actual > 50 && UI && UI.flashAlert) {
          UI.flashAlert(`${sourceHero.toUpperCase()} HIT: -${actual} HP`);
@@ -25,11 +24,8 @@
     }
   }
 
-  // SHARED LOGIC for clearing & filling
   async function clearAndFill(cellsToClear) {
       if (!cellsToClear.length) return;
-
-      // 1. Animate
       cellsToClear.forEach(({ r, c }) => {
         const el = document.getElementById(`cell-${r}-${c}`);
         if (el && el.firstChild) {
@@ -38,37 +34,21 @@
             el.firstChild.style.opacity = "0";
         }
       });
-      
       await delay(200);
-
-      // 2. Destroy Data
       cellsToClear.forEach(({ r, c }) => GS.board[r][c] = null);
-      
-      // 3. FORCE REFILL (Gravity)
-      if (window.Board && window.Board.forceFill) {
-          await window.Board.forceFill();
-      }
-      
-      // 4. Update Visuals
+      if (window.Board && window.Board.forceFill) await window.Board.forceFill();
       if(UI && UI.renderBoard) UI.renderBoard();
       await delay(100);
-
-      // 5. CRITICAL FIX: RECURSIVE STABILITY CHECK
-      // This ensures that if the ability caused tiles to drop and form NEW matches,
-      // those matches are resolved immediately so no empty tiles remain.
-      if (window.Board && window.Board.processBoardUntilStable) {
-          await window.Board.processBoardUntilStable();
-      }
+      if (window.Board && window.Board.processBoardUntilStable) await window.Board.processBoardUntilStable();
   }
 
-  // --- ABILITY HANDLERS ---
+  // --- BUFFED ABILITIES (Approx 5x-8x stronger) ---
 
   async function activateAelia() {
     if (GS.isProcessing || GS.aeliaCharge < 10) return;
     GS.isProcessing = true;
     try {
-      // Aelia: High Damage + Random Clear
-      applyHeroDamage("aelia", 150); // Buffed Dmg
+      applyHeroDamage("aelia", 600); // Was 150
       GS.aeliaCharge = 0;
       if (GS.discipleHP <= 0) { GS.isProcessing = false; return; }
 
@@ -90,20 +70,18 @@
     if (GS.isProcessing || GS.noctaCharge < 12) return;
     GS.isProcessing = true;
     try {
-      // Nocta: Purge (Strategic Clear)
+      // Nocta: Utility focused, so lower damage, but useful clear
       GS.noctaCharge = 0;
       const N = GS.GRID_SIZE;
       const candidates = [];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
           if (!isEmpty(GS.board[r][c])) candidates.push({ r, c });
       }
-      
-      // Shuffle & Pick 7 random tiles
       for (let i = candidates.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
-      const toClear = candidates.slice(0, Math.min(9, candidates.length)); // Buffed count
+      const toClear = candidates.slice(0, Math.min(9, candidates.length));
       
       if(UI && UI.flashAlert) UI.flashAlert("NOCTA PURGE", 900);
       await clearAndFill(toClear);
@@ -118,8 +96,7 @@
     if (GS.isProcessing || GS.vyraCharge < 15) return;
     GS.isProcessing = true;
     try {
-      // Vyra: Bomb (Area Clear)
-      applyHeroDamage("vyra", 200); // Buffed Dmg
+      applyHeroDamage("vyra", 900); // Was 200
       GS.vyraCharge = 0;
       if (GS.discipleHP <= 0) { GS.isProcessing = false; return; }
 
@@ -127,8 +104,6 @@
       const r0 = 1 + Math.floor(Math.random() * max);
       const c0 = 1 + Math.floor(Math.random() * max);
       const toClear = [];
-      
-      // 3x3 Grid
       for (let r = r0 - 1; r <= r0 + 1; r++) {
         for (let c = c0 - 1; c <= c0 + 1; c++) {
           const cell = GS.board[r][c];
@@ -147,8 +122,7 @@
     if (GS.isProcessing || GS.ionaCharge < 18) return;
     GS.isProcessing = true;
     try {
-      // Iona: Color Wipe (Massive Clear)
-      applyHeroDamage("iona", 250); // Buffed Dmg
+      applyHeroDamage("iona", 1400); // Was 250
       GS.ionaCharge = 0;
       if (GS.discipleHP <= 0) { GS.isProcessing = false; return; }
 
@@ -176,7 +150,6 @@
     const bind = (id, fn) => {
         const el = document.getElementById(id + "-ability-ring");
         if(el) {
-            // Remove old listeners to prevent double-firing if re-loaded
             const newEl = el.cloneNode(true);
             el.parentNode.replaceChild(newEl, el);
             newEl.addEventListener("click", fn);

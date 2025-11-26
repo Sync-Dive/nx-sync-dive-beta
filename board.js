@@ -1,22 +1,22 @@
-/* board.js — DAMAGE BUFF (12 -> 20) */
+/* board.js — FINAL BALANCE PATCH (Damage 50) */
 (function () {
   const GS = window.gameState || (window.gameState = {});
 
-  // ... [KEEP ALL HELPER FUNCTIONS: randInt, makeGlyphCell, etc.] ...
-  // (Assuming previous helper code is preserved. Focusing on the changed logic below)
-
-  // --- HELPERS (Condensed for brevity, ensure full helpers are present in actual file) ---
+  // --- HELPERS ---
   function randInt(n) { return Math.floor(Math.random() * n); }
   function makeGlyphCell(type) { return { kind: "glyph", type }; }
+  
   function isGlyph(cell) { return cell && cell.kind === "glyph"; }
   function isPoison(cell) { return cell && cell.kind === "poison"; }
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
   function isJunk(cell) { return cell && cell.kind === "junk"; }
   function isLava(cell) { return cell && cell.kind === "lava"; }
+  
   function isHazard(cell) { return (isPoison(cell) || isFrozen(cell) || isJunk(cell) || isLava(cell)); }
   function isEmpty(cell) { return cell == null; }
-  function canFall(cell) { return cell && !isHazard(cell); } // Hazards don't fall
+  function canFall(cell) { return cell && !isHazard(cell); } 
 
+  // Exports
   window.isGlyph = isGlyph; window.isPoison = isPoison; window.isFrozen = isFrozen;
   window.isJunk = isJunk; window.isLava = isLava; window.isEmpty = isEmpty;
 
@@ -42,7 +42,6 @@
     if (!isGlyph(cell)) return [];
     const t = cell.type;
     let out = [];
-    
     // Horizontal
     let temp = [{ r, c }];
     let x = c - 1;
@@ -50,7 +49,6 @@
     x = c + 1;
     while (x < N && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
     if (temp.length >= 3) out = out.concat(temp);
-
     // Vertical
     temp = [{ r, c }];
     let y = r - 1;
@@ -58,7 +56,6 @@
     y = r + 1;
     while (y < N && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
     if (temp.length >= 3) out = out.concat(temp);
-
     return out;
   }
 
@@ -76,7 +73,7 @@
     return matches;
   }
 
-  // --- HAZARD CLEANING ---
+  // --- HAZARDS & GRAVITY ---
   function cleanHazardsAdjacentTo(matches) {
     const N = GS.GRID_SIZE;
     const neighborsOffsets = [[-1, 0], [1, 0], [0, -1], [0, 1]]; 
@@ -87,7 +84,7 @@
         if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
           const neighbor = GS.board[nr][nc];
           if (isHazard(neighbor) && !isJunk(neighbor)) { 
-             GS.board[nr][nc] = null; // Destroy
+             GS.board[nr][nc] = null; 
           }
         }
       });
@@ -102,7 +99,6 @@
     }
   }
 
-  // --- GRAVITY & REFILL ---
   async function applyGravity() {
     const N = GS.GRID_SIZE;
     for (let c = 0; c < N; c++) {
@@ -113,7 +109,7 @@
           const cell = GS.board[rr][c];
           if (!cell) continue;
           if (canFall(cell)) { mover = { rr, cell }; break; }
-          if (isHazard(cell)) break; // Hazards block gravity
+          if (isHazard(cell)) break;
         }
         if (mover) {
           GS.board[r][c] = mover.cell;
@@ -137,12 +133,10 @@
       await refillBoard();
   }
 
-  // --- HAZARD SPREAD ---
   function neighbors(r, c) {
     const N = GS.GRID_SIZE;
     return [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([rr,cc])=>rr>=0&&rr<N&&cc>=0&&cc<N);
   }
-
   function spreadPoison() {
     const N = GS.GRID_SIZE;
     const poisons = [];
@@ -152,7 +146,6 @@
     const g = neighbors(seed.r, seed.c).filter(([rr,cc])=>isGlyph(GS.board[rr][cc]));
     if(g.length) { const [rr,cc] = g[randInt(g.length)]; GS.board[rr][cc] = {kind:"poison"}; }
   }
-
   function spreadLava() {
     const N = GS.GRID_SIZE;
     const lavas = [];
@@ -163,19 +156,19 @@
     if(g.length) { const [rr,cc] = g[randInt(g.length)]; GS.board[rr][cc] = {kind:"lava"}; }
   }
 
-  // --- RESOLUTION ---
+  // --- MAIN RESOLVE LOOP ---
   async function resolveMatchesOnceAndRefill() {
     const matches = findAllMatches();
     if (Object.keys(matches).length === 0) return false;
 
     const matchCount = Object.keys(matches).length;
     if (window.Abilities && window.Abilities.applyHeroDamage) {
-        // BETA TEST FIX: Increased Base Damage from 12 to 20
-        // This makes the game beatable without spending 30 minutes on one level.
-        const dmg = matchCount * 20; 
+        // --- BALANCE CHANGE HERE ---
+        // WAS: 20 -> Too weak for 3000 HP
+        // NEW: 50 -> Perfect sweet spot
+        const dmg = matchCount * 50; 
         window.Abilities.applyHeroDamage("board", dmg); 
         
-        // Charge logic
         GS.aeliaCharge = Math.min(10, GS.aeliaCharge + (matchCount > 3 ? 2 : 1));
         GS.noctaCharge = Math.min(12, GS.noctaCharge + 1);
         GS.vyraCharge = Math.min(15, GS.vyraCharge + 1);
@@ -184,10 +177,8 @@
 
     clearMatchesAndHazards(matches);
     await forceFill(); 
-    
     if (window.delay) await window.delay(200);
     if (window.UI && UI.renderBoard) UI.renderBoard();
-
     spreadPoison();
     spreadLava();
     return true;
@@ -216,26 +207,18 @@
     return true;
   }
   
-  // --- SHUFFLE LOGIC ---
   function shuffleGlyphsOnly() {
     const N = GS.GRID_SIZE;
     const glyphs = [];
     const positions = [];
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
-        if (isGlyph(GS.board[r][c])) {
-          glyphs.push(GS.board[r][c]);
-          positions.push({r, c});
-        }
-      }
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        if (isGlyph(GS.board[r][c])) { glyphs.push(GS.board[r][c]); positions.push({r, c}); }
     }
     for (let i = glyphs.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [glyphs[i], glyphs[j]] = [glyphs[j], glyphs[i]];
     }
-    positions.forEach((pos, i) => {
-      GS.board[pos.r][pos.c] = glyphs[i];
-    });
+    positions.forEach((pos, i) => GS.board[pos.r][pos.c] = glyphs[i]);
   }
 
   async function shuffleBoard() {
