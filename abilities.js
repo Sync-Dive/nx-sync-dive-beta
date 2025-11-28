@@ -1,17 +1,16 @@
-/* abilities.js — INSTANT DAMAGE FEEDBACK */
+/* abilities.js — V1.2 (INSTANT + FX) */
 (function () {
   const GS = window.GameState || window.gameState;
   const UI = window.UI;
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
 
-  // HELPER: Force update the DOM immediately (Bypass RequestAnimationFrame)
+  // HELPER: Force update the DOM immediately
   function updateStatsSync() {
       const hpBar = document.getElementById("disciple-hp-bar");
       const hpLabel = document.getElementById("disciple-hp-label");
       if (hpBar && GS.discipleHP != null) {
           const pct = Math.max(0, GS.discipleHP / GS.discipleMaxHP);
           hpBar.style.width = (pct * 100) + "%";
-          // Force a style recalc
           void hpBar.offsetWidth; 
       }
       if (hpLabel && GS.discipleHP != null) {
@@ -20,28 +19,38 @@
   }
 
   function applyHeroDamage(sourceHero, rawDamage) {
-    if (!GS.discipleHP || GS.discipleHP <= 0) return true; // True = Enemy Dead
+    if (!GS.discipleHP || GS.discipleHP <= 0) return true;
     
     const actual = Math.max(0, Math.floor(rawDamage));
     GS.discipleHP = Math.max(0, GS.discipleHP - actual);
 
-    // 1. INSTANT VISUAL UPDATE
+    // 1. UPDATE UI
     updateStatsSync();
 
-    // 2. Flash Alert
-    if (GS.discipleHP > 0 && actual > 50 && UI && UI.flashAlert) {
-         UI.flashAlert(`${sourceHero.toUpperCase()} HIT: -${actual} HP`);
+    // 2. FX TRIGGERS (NEW)
+    if (window.FX) {
+        if (actual > 100) {
+            FX.shake(2); // Big Shake
+            FX.showDamage(actual, true); // Crit Text
+        } else {
+            FX.showDamage(actual);
+        }
     }
 
-    // 3. CHECK VICTORY
+    // 3. AUDIO
+    if (window.AudioSys && sourceHero !== "board") {
+        // 'board' damage handled by match SFX, abilities handle their own
+    }
+
+    // 4. CHECK VICTORY
     if (GS.discipleHP <= 0) {
         if (window.Engine && window.Engine.handleVictory) {
             window.Engine.handleVictory();
         }
         GS.isProcessing = false; 
-        return true; // SIGNAL: DEAD
+        return true; 
     }
-    return false; // SIGNAL: ALIVE
+    return false;
   }
 
   function resetCharge(heroName) {
@@ -70,20 +79,17 @@
   }
 
   // --- ABILITIES ---
-  /* abilities.js — ADDED ABILITY SFX */
-// ...
   async function activateAelia() {
     if (GS.isProcessing || GS.aeliaCharge < 10) return;
     resetCharge("aelia");
     
-    if(window.AudioSys) AudioSys.play('cast'); // <--- ADD THIS LINE
+    if(window.AudioSys) AudioSys.play('cast');
     
     GS.isProcessing = true;
-    // ... rest of function
 
     try {
       const isDead = applyHeroDamage("aelia", 600);
-      if (isDead) return; // EXIT IMMEDIATELY
+      if (isDead) return;
 
       const row = Math.floor(Math.random() * GS.GRID_SIZE);
       const toClear = [];
@@ -94,18 +100,16 @@
       await clearAndFill(toClear);
     } catch(e) { console.error(e); } finally {
        if (GS.discipleHP > 0) GS.isProcessing = false;
-       // UI update happens in loop, but ensuring it here is safe
     }
   }
 
   async function activateNocta() {
     if (GS.isProcessing || GS.noctaCharge < 12) return;
     resetCharge("nocta");
-if(window.AudioSys) AudioSys.play('cast');
+    if(window.AudioSys) AudioSys.play('cast');
     GS.isProcessing = true;
 
     try {
-      // Nocta is pure utility (Purge), no damage
       const N = GS.GRID_SIZE;
       const candidates = [];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
@@ -116,7 +120,10 @@ if(window.AudioSys) AudioSys.play('cast');
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
       const toClear = candidates.slice(0, Math.min(9, candidates.length));
-      if(UI && UI.flashAlert) UI.flashAlert("NOCTA PURGE", 900);
+      
+      // No damage, just shake
+      if (window.FX) FX.shake(1);
+      
       await clearAndFill(toClear);
     } catch(e) { console.error(e); } finally {
       if (GS.discipleHP > 0) GS.isProcessing = false;
@@ -126,7 +133,7 @@ if(window.AudioSys) AudioSys.play('cast');
   async function activateVyra() {
     if (GS.isProcessing || GS.vyraCharge < 15) return;
     resetCharge("vyra");
-if(window.AudioSys) AudioSys.play('cast');
+    if(window.AudioSys) AudioSys.play('cast');
     GS.isProcessing = true;
 
     try {
@@ -152,7 +159,7 @@ if(window.AudioSys) AudioSys.play('cast');
   async function activateIona() {
     if (GS.isProcessing || GS.ionaCharge < 18) return;
     resetCharge("iona");
-if(window.AudioSys) AudioSys.play('cast');
+    if(window.AudioSys) AudioSys.play('cast');
     GS.isProcessing = true;
 
     try {

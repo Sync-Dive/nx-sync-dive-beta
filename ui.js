@@ -1,12 +1,17 @@
-/* ui.js — FINAL SAFE & AUDIO INTEGRATED */
+/* ui.js — FINAL: AUDIO, TUTORIAL, SAFE CLICKS, & INVENTORY */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const IS_GAME = window.location.pathname.includes("game.html");
   function el(id) { return document.getElementById(id); }
 
-  const TILE_IMAGES = ["assets/tile_aelia.png", "assets/tile_nocta.png", "assets/tile_vyra.png", "assets/tile_iona.png"];
+  const TILE_IMAGES = [
+      "assets/tile_aelia.png", 
+      "assets/tile_nocta.png", 
+      "assets/tile_vyra.png", 
+      "assets/tile_iona.png"
+  ];
   
-  // CACHE BUSTER + CORRECT LAVA NAME
+  // Cache Buster V=103 to ensure images load correctly
   const HAZARD_IMAGES = { 
       frozen: "assets/tile_deceit.png?v=103", 
       poison: "assets/tile_plague.png?v=103", 
@@ -14,21 +19,49 @@
       lava:   "assets/tile_lava.png?v=103" 
   };
 
-  const TUTORIAL_KEY = "nx_tutorial_seen_v6";
+  // --- TUTORIAL LOGIC ---
+  const TUTORIAL_KEY = "nx_tutorial_seen_final";
+  
   function launchTutorial() {
-      // Force Unlock if stuck
-      if(GS.isProcessing) { GS.isProcessing = false; if(window.UI && UI.updateAbilityUI) UI.updateAbilityUI(); }
+      // Force unlock if game got stuck during init
+      if(GS.isProcessing) { 
+          GS.isProcessing = false; 
+          if(window.UI && UI.updateAbilityUI) UI.updateAbilityUI(); 
+      }
 
       if(document.getElementById("tutorial-overlay")) return;
+      
       const overlay = document.createElement("div");
       overlay.id = "tutorial-overlay";
-      overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.98); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 2rem;`;
-      overlay.innerHTML = `<h2 style="color:#38bdf8; margin-bottom:1rem; font-family:monospace; font-size: 2rem;">COMBAT MANUAL</h2><div style="text-align:left; color:#ccc; line-height:1.8; max-width:400px; margin-bottom:2rem; font-family:sans-serif;"><p><strong>1. MATCH 3:</strong> Swap tiles to damage the Disciple.</p><p><strong>2. HERO SKILLS:</strong> Matches charge the rings below. Tap when glowing!</p><p><strong>3. HAZARDS:</strong> Match NEXT to Poison/Lava to destroy them.</p></div><button id="tut-close-btn" style="padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5);">INITIALIZE</button>`;
+      overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(2, 6, 23, 0.98); z-index: 20000; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        color: #fff; text-align: center; padding: 2rem;
+      `;
+      overlay.innerHTML = `
+        <h2 style="color:#38bdf8; margin-bottom:1rem; font-family:monospace; font-size: 2rem;">COMBAT MANUAL</h2>
+        <div style="text-align:left; color:#ccc; line-height:1.8; max-width:400px; margin-bottom:2rem; font-family:sans-serif;">
+            <p><strong>1. MATCH 3:</strong> Swap tiles to damage the Disciple.</p>
+            <p><strong>2. HERO SKILLS:</strong> Matches charge the rings below. Tap when glowing!</p>
+            <p><strong>3. HAZARDS:</strong> Match NEXT to Poison/Lava to destroy them.</p>
+            <p><strong>4. ITEMS:</strong> Use Bombs, Hourglasses, or Antidotes from the Item Bar.</p>
+        </div>
+        <button id="tut-close-btn" style="padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5);">INITIALIZE</button>
+      `;
       document.body.appendChild(overlay);
-      document.getElementById("tut-close-btn").onclick = () => { overlay.remove(); localStorage.setItem(TUTORIAL_KEY, "true"); if(UI.flashAlert) UI.flashAlert("SYSTEM READY", 1500); };
+      
+      document.getElementById("tut-close-btn").onclick = () => { 
+          overlay.remove(); 
+          localStorage.setItem(TUTORIAL_KEY, "true"); 
+          if(UI.flashAlert) UI.flashAlert("SYSTEM READY", 1500); 
+      };
   }
+  
+  // Expose to window for the ? button
   window.resetTutorial = launchTutorial;
 
+  // --- INITIALIZATION ---
   if (IS_GAME) {
     window.renderBoard = renderBoard;
     window.UI = window.UI || {};
@@ -40,17 +73,93 @@
     window.UI.updateEnergyUI = updateEnergyUI;
     window.UI.flashAlert = flashAlert;
     window.UI.updatePrismaUI = updatePrismaUI;
+    
+    // NEW EXPORT: Inventory
+    window.UI.updateItemCounts = updateItemCounts;
 
     document.addEventListener("DOMContentLoaded", () => {
-      initAbilityIcons(); injectTutorialButton(); bindAbilityklClicks();
-      if (!localStorage.getItem(TUTORIAL_KEY)) setTimeout(launchTutorial, 1000);
-      setTimeout(() => { updateEnergyUI(); updatePrismaUI(); if(GS.board) renderBoard(); }, 50);
-    });
-  } else { window.UI = window.UI || {}; window.UI.updateEnergyUI = function(){}; window.UI.updateStats = function(){}; window.UI.renderBoard = function(){}; window.renderBoard = function(){}; return; }
+      initAbilityIcons(); 
+      injectTutorialButton(); // Adds ? and Mute buttons
+      bindAbilityklClicks();  // Adds Hero click listeners safely
+      injectItemBar();        // Adds Item buttons (Bomb, etc)
 
-  // --- BUTTON INJECTION: ? AND MUTE ---
+      // Check tutorial status
+      if (!localStorage.getItem(TUTORIAL_KEY)) setTimeout(launchTutorial, 1000);
+      
+      // Initial render delay to ensure state is ready
+      setTimeout(() => { 
+          updateEnergyUI(); 
+          updatePrismaUI(); 
+          updateItemCounts();
+          if(GS.board) renderBoard(); 
+      }, 50);
+    });
+  } else { 
+    // Dummy exports for Map/Shop pages
+    window.UI = window.UI || {}; 
+    window.UI.updateEnergyUI = function(){}; 
+    window.UI.updateStats = function(){}; 
+    window.UI.renderBoard = function(){}; 
+    window.renderBoard = function(){}; 
+    return; 
+  }
+
+  // --- ITEM SYSTEM (NEW) ---
+  function injectItemBar() {
+      const bar = document.createElement("div");
+      bar.id = "item-bar";
+      bar.style.cssText = `display: flex; justify-content: center; gap: 10px; margin-top: 10px; margin-bottom: 5px;`;
+      
+      const items = [
+          { id: 'bomb', icon: '💣', fn: 'useBomb' },
+          { id: 'hourglass', icon: '⏳', fn: 'useHourglass' },
+          { id: 'antidote', icon: '🧪', fn: 'useAntidote' }
+      ];
+
+      items.forEach(it => {
+          const btn = document.createElement("button");
+          btn.className = "item-btn";
+          btn.style.cssText = `
+            background: rgba(255,255,255,0.08); border: 1px solid #475569; 
+            color: #e2e8f0; border-radius: 6px; padding: 4px 8px; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; font-size: 0.85rem; transition: background 0.2s;
+          `;
+          btn.onmouseover = () => btn.style.background = "rgba(255,255,255,0.15)";
+          btn.onmouseout = () => btn.style.background = "rgba(255,255,255,0.08)";
+          
+          btn.innerHTML = `${it.icon} <span id="count-${it.id}" style="font-weight:bold; color:#38bdf8;">0</span>`;
+          
+          btn.onclick = () => {
+              if (window.Items && window.Items[it.fn]) {
+                  if (GS.isProcessing) {
+                      if(UI.flashAlert) UI.flashAlert("BUSY", 500);
+                      return;
+                  }
+                  Items[it.fn]();
+              }
+          };
+          bar.appendChild(btn);
+      });
+
+      // Insert ABOVE the Ability Bar
+      const abBar = document.getElementById("ability-bar");
+      if(abBar) abBar.parentNode.insertBefore(bar, abBar);
+  }
+
+  function updateItemCounts() {
+      if(!window.economy) return;
+      const b = document.getElementById("count-bomb");
+      const h = document.getElementById("count-hourglass");
+      const a = document.getElementById("count-antidote");
+      
+      if(b) b.innerText = economy.getItemCount('bomb');
+      if(h) h.innerText = economy.getItemCount('hourglass');
+      if(a) a.innerText = economy.getItemCount('antidote');
+  }
+
+  // --- BUTTON INJECTION ---
   function injectTutorialButton() {
-      // 1. Tutorial Button
+      // 1. Tutorial Button (?)
       const existing = document.getElementById("tut-trig"); if(existing) existing.remove();
       const btn = document.createElement("div");
       btn.id = "tut-trig";
@@ -59,7 +168,7 @@
       btn.onclick = launchTutorial;
       document.body.appendChild(btn);
 
-      // 2. Mute Button
+      // 2. Mute Button (Sound)
       const mute = document.createElement("div");
       mute.id = "mute-btn";
       mute.innerText = "🔊";
@@ -70,6 +179,7 @@
       if(window.AudioSys) AudioSys.updateMuteState();
   }
 
+  // --- SAFE ABILITY BINDING ---
   function bindAbilityklClicks() {
       const bind = (id, fnName) => {
           const el = document.getElementById(id + "-ability-ring");
@@ -79,10 +189,11 @@
               newEl.onclick = () => {
                   if(GS.isProcessing) return; 
                   
+                  // Visual Check: Is it full?
                   const icon = document.getElementById(id + "-ability-icon");
-                  // Only fire if visually ready
                   if(!icon || !icon.classList.contains("ability-ready")) return;
 
+                  // Immediate Visual Reset
                   newEl.style.background = "conic-gradient(#38bdf8 0deg, rgba(255,255,255,0.08) 0deg)";
                   icon.classList.remove("ability-ready");
                   
@@ -93,14 +204,20 @@
               };
           }
       };
-      bind("aelia", "activateAelia"); bind("nocta", "activateNocta"); bind("vyra",  "activateVyra"); bind("iona",  "activateIona");
+      bind("aelia", "activateAelia"); 
+      bind("nocta", "activateNocta"); 
+      bind("vyra",  "activateVyra"); 
+      bind("iona",  "activateIona");
   }
 
   function initAbilityIcons() {
       const map = { "aelia": 0, "nocta": 1, "vyra": 2, "iona": 3 };
       for (const [hero, typeIdx] of Object.entries(map)) {
           const icon = el(hero + "-ability-icon");
-          if(icon) { icon.classList.add(`glyph-type-${typeIdx}`); icon.style.transition = "transform 0.2s, filter 0.2s"; }
+          if(icon) { 
+              icon.classList.add(`glyph-type-${typeIdx}`); 
+              icon.style.transition = "transform 0.2s, filter 0.2s"; 
+          }
       }
   }
 
@@ -145,7 +262,13 @@
     const bar = el("ability-bar");
     if (GS.isProcessing) { if(bar) bar.style.opacity = "0.7"; } 
     else { if(bar) bar.style.opacity = "1"; }
-    const A = [ { id: "aelia", charge: GS.aeliaCharge, max: 10 }, { id: "nocta", charge: GS.noctaCharge, max: 12 }, { id: "vyra",  charge: GS.vyraCharge,  max: 15 }, { id: "iona",  charge: GS.ionaCharge,  max: 18 } ];
+    
+    const A = [ 
+        { id: "aelia", charge: GS.aeliaCharge, max: 10 }, 
+        { id: "nocta", charge: GS.noctaCharge, max: 12 }, 
+        { id: "vyra",  charge: GS.vyraCharge,  max: 15 }, 
+        { id: "iona",  charge: GS.ionaCharge,  max: 18 } 
+    ];
     A.forEach((h) => {
       const ring = el(h.id + "-ability-ring");
       const icon = el(h.id + "-ability-icon");
@@ -158,13 +281,13 @@
     });
   }
 
+  // --- HUD HELPERS ---
   function updateDiscipleBadge(){const b=el("disciple-badge-live"),c=el("disciple-chibi-live"),d=GS.disciple;if(!d)return;if(b)b.textContent="Disciple: "+d.name;if(c){c.src="assets/disciple_"+d.id.toLowerCase()+".jpg";c.onerror=function(){this.onerror=null;let f="tile_greed.png";if(d.attack==="poison")f="tile_plague.png";if(d.attack==="drain")f="tile_war.png";if(d.attack==="deceit")f="tile_deceit.png";if(d.attack==="greed")f="tile_greed.png";this.src="assets/"+f;};c.style.display="block";}}
   function updateChibiUI(){const h=el("hero-chibi-live"),d=GS.disciple;if(!h||!d)return;const m={GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"},n=m[d.id]||"aelia";h.src="assets/"+n+".png";h.onerror=function(){this.onerror=null;this.src="assets/tile_"+n+".png"};updateDiscipleBadge();}
   function updateStats(){if(!IS_GAME)return;const b=el("disciple-hp-bar"),l=el("disciple-hp-label"),m=el("moves-left");if(b&&GS.discipleHP!=null){const p=Math.max(0,GS.discipleHP/GS.discipleMaxHP);b.style.width=(p*100)+"%"}if(l&&GS.discipleHP!=null)l.textContent=GS.discipleHP+" HP";if(m)m.textContent=GS.movesLeft}
   function updateEnergyUI(){if(!window.economy)return;window.economy.regenerateEnergy();const c=window.economy.getEnergy(),m=window.economy.maxEnergy,ec=el("energy-count"),er=el("energy-regen-time");if(ec)ec.textContent=c+" / "+m;if(c>=m){if(er)er.textContent="FULL";if(window._energyInterval)clearInterval(window._energyInterval);return}function t(){const E=window.economy,L=parseInt(localStorage.getItem(E.LS_KEYS.lastEnergyAt),10)||Date.now(),R=E.regenMinutes*60000,N=L+R,l=N-Date.now();if(l<=0){E.regenerateEnergy();updateEnergyUI();return}const mm=Math.floor(l/60000),ss=Math.floor((l%60000)/1000);if(er)er.textContent=`${mm}:${ss.toString().padStart(2,'0')}`}if(window._energyInterval)clearInterval(window._energyInterval);t();window._energyInterval=setInterval(t,1000)}
   function updatePrismaUI(){const p=el("prisma-count"),a=el("aurum-count");if(window.economy){if(p)p.textContent=economy.getPrisma();if(a)a.textContent=economy.getAurum()}}
   
-  // DEFAULT FLASH DURATION: 2500ms
   function flashAlert(t,d=2500){
       const b=el("alert-banner");
       if(!b)return;

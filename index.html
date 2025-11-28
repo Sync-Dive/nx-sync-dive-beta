@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>N-X // SYNC-DIVE</title>
-  <style>
+  <title>Glyphbound: Protocol</title> <style>
+    /* ... (Keep your existing CSS here) ... */
+    
     /* =========================================
        GLOBAL & RESET
        ========================================= */
@@ -52,24 +53,19 @@
       justify-content: center;
     }
 
-    /* The actual image */
     #studio-logo {
       width: 220px;
       height: 220px;
       border-radius: 24px;
-      box-shadow: 
-        0 0 20px rgba(14, 165, 233, 0.2),
-        0 0 60px rgba(217, 70, 239, 0.1);
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.2), 0 0 60px rgba(217, 70, 239, 0.1);
       transition: transform 0.3s ease;
       display: block;
       object-fit: cover;
-      /* If image fails, this background shows */
       background: #0f172a;
       position: relative;
       z-index: 2;
     }
 
-    /* A subtle glowing ring behind the logo */
     .logo-wrapper::after {
       content: '';
       position: absolute;
@@ -115,16 +111,10 @@
     }
 
     #init-btn::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 4px; height: 100%;
-      background: var(--neon-blue);
+      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--neon-blue);
     }
     #init-btn::after {
-      content: '';
-      position: absolute;
-      top: 0; right: 0; width: 4px; height: 100%;
-      background: var(--neon-purple);
+      content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: var(--neon-purple);
     }
 
     .system-status {
@@ -147,19 +137,14 @@
         z-index: 10;
     }
 
-    /* =========================================
-       ANIMATIONS
-       ========================================= */
     @keyframes floatLogo {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
     }
-
     @keyframes pulseRing {
       0% { transform: scale(0.95); opacity: 0.5; border-color: var(--neon-blue); }
       100% { transform: scale(1.1); opacity: 0; border-color: var(--neon-purple); }
     }
-
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -175,14 +160,27 @@
 
   <div class="action-area">
     <button id="init-btn">Initialize Link</button>
+    <div style="margin-top:10px; font-size:0.7rem; color:#64748b; cursor:pointer;" onclick="recoverData()">[ RECOVER DATA ]</div>
     <div class="system-status" id="status-text">SYSTEM STANDBY...</div>
   </div>
+
+  <script src="save_system.js"></script>
 
   <script>
     const btn = document.getElementById("init-btn");
     const status = document.getElementById("status-text");
     const img = document.getElementById("studio-logo");
     const debug = document.getElementById("debug-msg");
+
+    // DATA RECOVERY FUNCTION
+    function recoverData() {
+        const code = prompt("PASTE RECOVERY CODE:");
+        if(code && window.SaveSys) {
+            SaveSys.importData(code);
+        } else if (code) {
+            alert("Save System not loaded.");
+        }
+    }
 
     img.onerror = function() {
         debug.style.display = "block";
@@ -201,6 +199,5 @@
       }, 400);
     };
   </script>
-
 </body>
 </html>

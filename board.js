@@ -1,4 +1,4 @@
-/* board.js — CRASH PROOFING & LOGIC FIXES */
+/* board.js — FIXED EXPORTS FOR ITEMS */
 (function () {
   const GS = window.gameState || (window.gameState = {});
 
@@ -11,13 +11,20 @@
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
   function isJunk(cell) { return cell && cell.kind === "junk"; }
   function isLava(cell) { return cell && cell.kind === "lava"; }
+  
   function isHazard(cell) { return (isPoison(cell) || isFrozen(cell) || isJunk(cell) || isLava(cell)); }
   function isEmpty(cell) { return cell == null; }
   function isStatic(cell) { return isHazard(cell); } 
   function canFall(cell) { return isGlyph(cell); }
 
-  window.isGlyph = isGlyph; window.isPoison = isPoison; window.isFrozen = isFrozen;
-  window.isJunk = isJunk; window.isLava = isLava; window.isEmpty = isEmpty;
+  // --- CRITICAL FIX: EXPORT isHazard ---
+  window.isGlyph = isGlyph; 
+  window.isPoison = isPoison; 
+  window.isFrozen = isFrozen;
+  window.isJunk = isJunk; 
+  window.isLava = isLava; 
+  window.isHazard = isHazard; // <--- THIS WAS MISSING
+  window.isEmpty = isEmpty;
 
   function initBoard(N) {
     GS.GRID_SIZE = N;
@@ -41,23 +48,18 @@
     const N = bd.length;
     const t = cell.type;
     let out = [];
-    
-    // Horizontal
     let temp = [{ r, c }];
     let x = c - 1; 
     while (x >= 0 && bd[r][x] && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x--; }
     x = c + 1; 
     while (x < N && bd[r][x] && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
     if (temp.length >= 3) out = out.concat(temp);
-
-    // Vertical
     temp = [{ r, c }];
     let y = r - 1; 
     while (y >= 0 && bd[y] && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y--; }
     y = r + 1; 
     while (y < N && bd[y] && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
     if (temp.length >= 3) out = out.concat(temp);
-
     return out;
   }
 
@@ -94,14 +96,13 @@
   // --- GRAVITY ---
   async function applyGravityAndRefill() {
     const N = GS.GRID_SIZE;
-    // 1. Gravity (Bubble Up Empty Spots)
+    // 1. Gravity
     for (let c = 0; c < N; c++) {
       for (let r = N - 1; r >= 0; r--) {
         if (GS.board[r][c] === null) {
-          // Look up
           for (let k = r - 1; k >= 0; k--) {
             const above = GS.board[k][c];
-            if (isStatic(above)) break; // Blocked by hazard
+            if (isStatic(above)) break;
             if (canFall(above)) {
               GS.board[r][c] = above;
               GS.board[k][c] = null;
@@ -151,14 +152,25 @@
     if (Object.keys(matches).length === 0) return false;
 
     // AUDIO SAFE CALL
-    try {
-        if(window.AudioSys && AudioSys.play) AudioSys.play('match');
-    } catch(e) { console.warn("Audio fail", e); }
+    try { if(window.AudioSys && AudioSys.play) AudioSys.play('match'); } catch(e) { }
+
+    // FX: PARTICLES
+    if (window.FX && FX.explode) {
+        for (const key in matches) {
+            const { r, c } = matches[key];
+            const cell = GS.board[r][c];
+            if (cell && cell.kind === 'glyph') FX.explode(r, c, cell.type);
+        }
+    }
 
     const matchCount = Object.keys(matches).length;
     if (window.Abilities && window.Abilities.applyHeroDamage) {
         const dmg = matchCount * 25; 
         window.Abilities.applyHeroDamage("board", dmg); 
+        
+        // FX: DAMAGE
+        if (window.FX && FX.showDamage) FX.showDamage(dmg);
+
         GS.aeliaCharge = Math.min(10, GS.aeliaCharge + (matchCount > 3 ? 2 : 1));
         GS.noctaCharge = Math.min(12, GS.noctaCharge + 1);
         GS.vyraCharge = Math.min(15, GS.vyraCharge + 1);
@@ -177,10 +189,8 @@
           await applyGravityAndRefill();
           if (window.UI && UI.renderBoard) UI.renderBoard();
           if (window.delay) await window.delay(150);
-          
           changed = await resolveMatchesOnce();
           if (!changed) break; 
-          
           loopCount++;
         }
         

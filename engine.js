@@ -1,4 +1,4 @@
-/* engine.js — V1.1 (AUDIO & TIMING) */
+/* engine.js — V1.3 (STABILITY & DEFEAT FIXES) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -19,11 +19,13 @@
   }
 
   function performDiscipleAttack(type) {
-    // AUDIO: Play Warning Sound
     if(window.AudioSys) AudioSys.play('warning');
 
     const target = getSafeRandomGlyph();
     if(target) {
+        // FX: SHAKE ON IMPACT
+        if (window.FX && FX.shake) FX.shake(1);
+
         const {r, c} = target;
         if (type === "poison") GS.board[r][c] = { kind: "poison" };
         else if (type === "drain") GS.board[r][c] = { kind: "lava" };
@@ -38,12 +40,9 @@
     const every = GS.discipleAttackRate || 3; 
     
     if (GS.turnsTaken > 0 && GS.turnsTaken % every === 0) {
-        // 1. VISUAL ALERT
         if (window.UI && UI.flashAlert) {
             UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 2500);
         }
-        
-        // 2. DELAYED ATTACK (Syncs with Alert Animation)
         setTimeout(() => { 
             performDiscipleAttack(GS.disciple.attack || "greed"); 
         }, 800); 
@@ -56,7 +55,6 @@
     victoryTriggered = true;
     GS.isProcessing = true; 
     
-    // AUDIO: Win
     if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
 
     const reward = 20 + (GS.movesLeft * 2);
@@ -98,15 +96,22 @@
     victoryTriggered = true;
     GS.isProcessing = true;
     
-    // AUDIO: Lose
     if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('lose'); }
 
     const overlay = document.getElementById("end-overlay");
     const msgEl = document.getElementById("end-message");
+    const imgEl = document.getElementById("end-chibi"); // Ensure we get this element
     const btnNext = document.getElementById("btn-next-level");
 
     if (msgEl) { msgEl.textContent = "DEFEAT"; msgEl.className = "defeat-title"; }
     if (btnNext) btnNext.style.display = "none";
+
+    // FIX: Show Disciple Image on Defeat
+    if (imgEl && GS.disciple) {
+        imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`;
+        // Fallback if image missing
+        imgEl.onerror = function() { this.src = "assets/tile_greed.png"; };
+    }
 
     if(overlay) overlay.style.display = "flex";
   }
@@ -154,7 +159,7 @@
       }
   }
 
-  function bootLevel(lvlId) {
+  async function bootLevel(lvlId) {
     const id = typeof lvlId === 'number' ? lvlId : window.readLevelIdFromURL();
     const lvl = (window.LEVELS || []).find((L) => L.id === id) || window.LEVELS[0];
 
@@ -174,10 +179,13 @@
     GS.isProcessing = false;
     victoryTriggered = false;
 
-    // AUDIO: Start Combat Music
     if(window.AudioSys) AudioSys.playBGM('bgm_battle');
 
-    if (window.Board?.initBoard) Board.initBoard(GS.GRID_SIZE);
+    if (window.Board?.initBoard) {
+        Board.initBoard(GS.GRID_SIZE);
+        // FIX: Clean up initial "lucky matches" before player starts
+        if(Board.processBoardUntilStable) await Board.processBoardUntilStable();
+    }
     
     if (window.UI) {
       UI.renderBoard(); UI.updateStats(); UI.updateDiscipleBadge();

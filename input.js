@@ -1,4 +1,4 @@
-// input.js — FIXED: CLICK + DRAG + AUDIO
+// input.js — FIXED + AUDIO UNLOCK
 (function () {
   const GS = window.gameState || window.GameState || (window.gameState = {});
 
@@ -14,6 +14,15 @@
   function areNeighbors(r1, c1, r2, c2) { return (Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1); }
 
   function onCellPointerDown(e, r, c) {
+    // --- AUDIO FIX: Resume Context on First Interaction ---
+    if (window.AudioSys && AudioSys.ctx && AudioSys.ctx.state === 'suspended') {
+        AudioSys.ctx.resume().then(() => {
+            console.log("Audio Context Resumed");
+            // Optional: Restart BGM if it was paused
+            if (!AudioSys.muted) AudioSys.playBGM('bgm_battle');
+        });
+    }
+
     if (GS.isProcessing || !window.Board) return;
     const cell = GS.board?.[r]?.[c];
     if (!isSwappable(cell)) { clearSelection(); return; }
@@ -47,7 +56,6 @@
     drag.swapped = true;
     clearSelection();
     
-    // AUDIO TRIGGER
     try { if(window.AudioSys && AudioSys.play) AudioSys.play('swap'); } catch(e){}
 
     window.Engine.trySwap(drag.startR, drag.startC, r2, c2).then(() => resetDrag());
