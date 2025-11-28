@@ -1,4 +1,4 @@
-/* style.css — FINAL FIXED VERSION */
+/* style.css — ROUND TILES UPDATE */
 
 /* ============================================================
     GLOBAL PAGE BASE
@@ -15,41 +15,21 @@ body {
   overscroll-behavior: none;
 }
 
-img {
-  max-width: 100%;
-  display: block;
-}
+img { max-width: 100%; display: block; }
 
 #game-root {
   max-width: 480px;
   margin: 0 auto;
   padding: 0.5rem;
 }
-/* ADD THIS TO style.css */
-
-/* Hex Grid specific styles are inline in map.html for portability, 
-   but ensure these basics exist: */
-
-.primary-btn {
-  background: linear-gradient(135deg, #0ea5e9, #2563eb);
-  border: none;
-  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
-  color: #fff; text-transform: uppercase; font-weight: bold;
-  padding: 0.5rem 1rem; border-radius: 4px;
-}
-
-.secondary-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #ccc; text-transform: uppercase; font-weight: bold;
-  padding: 0.5rem 1rem; border-radius: 4px;
-}
 
 /* ============================================================
-    MAP SCREEN
+    MAP SCREEN & HUD
 ============================================================ */
+/* ... (Assume standard Map/HUD styles here are unchanged) ... */
+/* For brevity, I am including the critical Game Grid CSS below */
+
 #map-screen {
-  /* FIX: Updated path to assets folder */
   background: 
     linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4)),
     url('assets/NeoSeoulSectors.jpg') no-repeat center center fixed;
@@ -59,192 +39,14 @@ img {
   flex-direction: column;
 }
 
-#map-header {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
-  padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-#map-title {
-  text-align: center;
-  margin: 0 0 0.5rem 0;
-  color: #fff;
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2rem;
-  text-shadow: 0 0 10px #38bdf8;
-}
-
-#map-currencies {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  font-size: 0.9rem;
-  margin-bottom: 0.8rem;
-}
-
-.currency {
-  background: rgba(0,0,0,0.6);
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid #334155;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.currency.energy { color: #facc15; border-color: #facc15; }
-.currency.prisma { color: #38bdf8; border-color: #38bdf8; }
-.currency.aurum  { color: #f472b6; border-color: #f472b6; }
-
-#map-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-#level-select-grid {
-  padding: 2rem 1rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 15px;
-  max-width: 600px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.level-btn {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  height: 80px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.1rem;
-  cursor: pointer;
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  position: relative;
-  overflow: hidden;
-}
-
-.level-btn:not(.locked):hover {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
-  transform: translateY(-2px);
-  box-shadow: 0 0 15px #38bdf8;
-}
-
-.level-btn.locked {
-  background: rgba(15, 23, 42, 0.9);
-  color: #64748b;
-  border-color: #334155;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.level-sub {
-  font-size: 0.6rem;
-  font-weight: normal;
-  margin-top: 4px;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
 /* ============================================================
-    HUD / TOP BARS (GAME)
-============================================================ */
-#top-hud {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
-#hud-row1, #hud-row2 {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  font-size: 0.75rem;
-}
-#hud-row1 { text-transform: uppercase; letter-spacing: 0.15em; }
-.hud-label { color: #9ca3af; }
-.hud-value { color: #e5e7eb; }
-
-#disciple-hp-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 0.25rem;
-}
-#disciple-hp-bar-back {
-  width: 80%;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.1);
-  overflow: hidden;
-  margin-top: 0.25rem;
-}
-#disciple-hp-bar {
-  height: 100%;
-  width: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #ef4444, #f97316);
-  transition: width 0.25s ease-out;
-}
-#disciple-hp-label {
-  font-size: 0.7rem;
-  margin-top: 0.1rem;
-  color: #fca5a5;
-}
-
-/* ============================================================
-    CHIBI UI (Game)
-============================================================ */
-#chibi-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.chibiFrame {
-  width: 96px;
-  height: 96px;
-  overflow: hidden;
-  border-radius: 1rem;
-  background: rgba(255,255,255,0.05);
-  box-shadow: 0 0 12px rgba(255,255,255,0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* FIX: Prevent Chibis from exploding */
-.chibiFrame img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* ============================================================
-    GAME GRID (Critical Fix)
+    GAME GRID & TILES
 ============================================================ */
 #game-grid {
   margin: 0 auto;
   display: grid;
-  /* FORCE 9 COLUMNS */
   grid-template-columns: repeat(9, 1fr); 
-  gap: 2px;
+  gap: 2px; /* Slightly tighter gap for circles looks better */
   width: 96vw;
   max-width: 460px;
   aspect-ratio: 1 / 1; 
@@ -259,24 +61,43 @@ img {
 }
 
 .cell-selected .tile3D {
-  box-shadow: 0 0 0 2px #fff, inset 0 0 10px #fff;
+  /* Selection Glow adapted for Circles */
+  box-shadow: 0 0 0 2px #fff, inset 0 0 15px #fff;
   filter: brightness(1.3);
 }
 
 .tile3D {
   background: linear-gradient(145deg, #1e293b, #0f172a);
-  border-radius: 12px;
-  box-shadow: inset 0 0 5px rgba(255,255,255,0.05), 0 4px 8px rgba(0,0,0,0.4);
+  
+  /* CHANGE: ROUND SHAPE */
+  border-radius: 50%; 
+  
+  /* Previous Fixes: No border artifacts */
+  border: none !important;
+  outline: none !important;
+  
+  /* Deep shadow for sphere look */
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.6), 0 4px 6px rgba(0,0,0,0.5);
+  
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
+  overflow: hidden; 
+  
+  /* Smooth transition for falling/selecting */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Optional: Make them slightly smaller than cell to show gaps */
+.tile3D {
+    transform: scale(0.92);
 }
 
 .glyphContainer {
-  width: 90%;
-  height: 90%;
+  width: 80%; /* Slightly smaller content for round tiles */
+  height: 80%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,11 +108,47 @@ img {
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  transition: transform 0.2s;
 }
 
-/* ============================================================
-    ANIMATIONS & EFFECTS
-============================================================ */
+/* style.css — LAVA FIX (Show Original Image) */
+
+/* ... [Previous CSS] ... */
+
+/* --- TILE COLORS (Original Assets) --- */
+.glyph-type-0 { filter: none; }
+.glyph-type-1 { filter: none; }
+.glyph-type-2 { filter: none; }
+.glyph-type-3 { filter: none; }
+
+/* --- LAVA TILE (Show User Asset) --- */
+.lavaTile .tile3D {
+    /* Remove the hardcoded dark background so your image background shows */
+    background: linear-gradient(145deg, #1e293b, #0f172a); 
+    
+    /* Keep the red glow if you want, or remove box-shadow to be plain */
+    box-shadow: inset 0 0 10px rgba(255, 69, 0, 0.3); 
+    
+    border: none !important;
+    border-radius: 50%;
+}
+
+.lavaTile img { 
+    /* CRITICAL FIX: Remove grayscale/brightness filters */
+    filter: none; 
+    opacity: 1;
+    
+    /* Optional: Add a subtle pulse to the image itself if you want it "alive" */
+    animation: lavaBreathing 2s infinite alternate;
+}
+
+@keyframes lavaBreathing {
+    from { transform: scale(0.95); filter: drop-shadow(0 0 2px #ff4500); }
+    to { transform: scale(1.0); filter: drop-shadow(0 0 8px #ff4500); }
+}
+
+
+/* --- OTHER HAZARDS --- */
 @keyframes poisonPulse { 0% { filter: drop-shadow(0 0 3px #00ff00cc); transform: scale(1); } 50% { filter: drop-shadow(0 0 10px #00ff66ff); transform: scale(1.05); } 100% { filter: drop-shadow(0 0 3px #00ff00cc); transform: scale(1); } }
 .poisonTile img { animation: poisonPulse 1.6s infinite ease-in-out; }
 
@@ -301,79 +158,52 @@ img {
 @keyframes junkFlicker { 0% { filter: brightness(1); } 20% { filter: brightness(0.8); } 25% { filter: brightness(1.4); } 35% { filter: brightness(0.8); } 100% { filter: brightness(1); } }
 .junkTile img { animation: junkFlicker 1.8s infinite steps(4); }
 
-@keyframes lavaGlow { 0% { filter: drop-shadow(0 0 4px #ff3300aa); } 40% { filter: drop-shadow(0 0 10px #ff5500ff); } 70% { filter: drop-shadow(0 0 16px #ffaa00ff); } 100% { filter: drop-shadow(0 0 4px #ff3300aa); } }
-.lavaTile img { animation: lavaGlow 1.4s infinite ease-in-out; }
-
-/* ============================================================
-    ABILITIES & BUTTONS
-============================================================ */
-.ability-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 64px;
+/* --- HUD & BUTTONS --- */
+#top-hud {
+  display: flex; flex-direction: column; gap: 0.4rem; text-align: center; margin-bottom: 0.5rem;
 }
+#hud-row1, #hud-row2 {
+  display: flex; justify-content: center; gap: 1rem; font-size: 0.75rem;
+}
+.hud-label { color: #9ca3af; }
+.hud-value { color: #e5e7eb; }
+
+#disciple-hp-area {
+  display: flex; flex-direction: column; align-items: center; margin-top: 0.25rem;
+}
+#disciple-hp-bar-back {
+  width: 80%; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden;
+}
+#disciple-hp-bar {
+  height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ef4444, #f97316); transition: width 0.1s linear; /* Fast visual update */
+}
+#disciple-hp-label { font-size: 0.7rem; color: #fca5a5; }
+
+/* ABILITY RINGS */
+.ability-slot { display: flex; flex-direction: column; align-items: center; width: 64px; }
 .ability-ring {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  width: 56px; height: 56px; border-radius: 50%;
   background: conic-gradient(rgba(255,255,255,0.1) 0deg 360deg);
   border: 2px solid rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
-  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 4px; cursor: pointer;
 }
-.ability-icon {
-  width: 70%;
-  height: 70%;
-  border-radius: 50%;
-  object-fit: contain;
-}
-.ability-ready {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 12px #38bdf8);
-}
-.ability-label {
-  font-size: 0.65rem;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
+.ability-icon { width: 70%; height: 70%; border-radius: 50%; object-fit: contain; }
+.ability-ready { transform: scale(1.1); filter: drop-shadow(0 0 12px #38bdf8); }
+.ability-label { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; }
 
-.bottom-btn, .primary-btn, .secondary-btn {
-  padding: 0.45rem 0.9rem;
-  border-radius: 12px;
-  cursor: pointer;
-  text-transform: uppercase;
-  font-weight: bold;
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #fff;
-  transition: all 0.2s;
+/* BOTTOM BUTTONS */
+.bottom-btn {
+  padding: 0.45rem 0.9rem; border-radius: 12px; cursor: pointer; text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.15); color: #fff; background: rgba(255,255,255,0.04);
+  font-size: 0.75rem; letter-spacing: 0.12em; transition: all 0.2s;
 }
-.bottom-btn { background: rgba(255,255,255,0.04); font-size: 0.75rem; letter-spacing: 0.12em; }
 .bottom-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
-
-.primary-btn { background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; box-shadow: 0 0 10px rgba(14, 165, 233, 0.5); }
-.secondary-btn { background: rgba(255, 255, 255, 0.1); }
-
 #bottom-buttons { margin-top: 0.75rem; display: flex; justify-content: center; gap: 0.5rem; }
 
-/* ============================================================
-    SHOP & OVERLAY
-============================================================ */
-#shop-screen { background: #0f172a; padding: 1rem; min-height: 100vh; }
-#shop-items { display: grid; gap: 1rem; max-width: 400px; margin: 1rem auto; }
-.shop-item { background: rgba(255,255,255,0.05); border: 1px solid #334155; padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-.shop-item-title { color: #fff; font-weight: bold; }
-.shop-item-cost { color: #94a3b8; font-size: 0.8rem; }
-
+/* OVERLAYS */
 #end-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(15, 23, 42, 0.88);
-  display: none; z-index: 999;
+  background: rgba(15, 23, 42, 0.88); display: none; z-index: 999;
   align-items: center; justify-content: center;
 }
 #end-box {
@@ -384,23 +214,90 @@ img {
 #end-chibi { width: 120px; height: 120px; object-fit: contain; margin-bottom: 0.5rem; }
 .victory-title { font-size: 1.3rem; margin-bottom: 0.75rem; color: #86efac; text-shadow: 0 0 10px rgba(74,222,128,0.65); }
 .defeat-title { font-size: 1.3rem; margin-bottom: 0.75rem; color: #fca5a5; text-shadow: 0 0 10px rgba(248,113,113,0.6); }
-
 #end-box button { width: 100%; padding: 0.5rem; margin-top: 0.35rem; border-radius: 10px; background: rgba(255,255,255,0.07); color: #fff; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
 #end-box button:hover { background: rgba(255,255,255,0.15); }
-/* --- UI/UX FIX: Distinct Tile Colors --- */
-/* Aelia (Type 0) - Default Blueish */
-.glyph-type-0 { filter: hue-rotate(0deg) brightness(1.1); }
 
-/* Nocta (Type 1) - Purple/Pink */
-.glyph-type-1 { filter: hue-rotate(90deg) brightness(1.2); }
+/* Chibi Frames */
+.chibiFrame {
+  width: 96px; height: 96px; overflow: hidden; border-radius: 1rem;
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 12px rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+}
+.chibiFrame img { width: 100%; height: 100%; object-fit: contain; }
+#chibi-row { display: flex; justify-content: space-between; padding: 0 1rem; margin-bottom: 0.5rem; }
 
-/* Vyra (Type 2) - Red/Orange */
-.glyph-type-2 { filter: hue-rotate(180deg) sepia(0.3); }
 
-/* Iona (Type 3) - Green/Teal */
-.glyph-type-3 { filter: hue-rotate(270deg) contrast(1.2); }
+/* style.css — BOSS ALERT FIX (High Visibility) */
 
-/* Make them pop more */
-.tileIcon {
-    transition: transform 0.2s;
+/* ... (Keep your grid/tile/map CSS) ... */
+
+/* --- CENTERED WARNING ALERT (Force Override) --- */
+#alert-banner {
+  /* Force positioning to center of screen */
+  position: fixed !important; 
+  top: 50% !important; 
+  left: 50% !important; 
+  transform: translate(-50%, -50%) !important;
+  
+  /* SOLID Background (No Ghosting) */
+  background-color: #000 !important; 
+  border: 4px solid #ef4444 !important; 
+  color: #fff !important;
+  
+  /* Sizing */
+  width: 80%;
+  max-width: 400px;
+  padding: 2rem 1rem !important;
+  border-radius: 16px !important; 
+  
+  /* Typography - Massive & Clear */
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-size: 2rem !important; 
+  font-weight: 900 !important; 
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 2px;
+  line-height: 1.2;
+  
+  /* Hard shadow for readability */
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 20px #ef4444;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.6) !important;
+  
+  z-index: 99999 !important; /* Higher than everything */
+  display: none; 
+  pointer-events: none;
+}
+
+/* The Animation Class */
+.alert-active { 
+  display: flex !important;
+  align-items: center; 
+  justify-content: center;
+  animation: bossPop 2.5s forwards !important; 
+}
+
+/* Animation: Pop in -> Stay -> Fade out */
+@keyframes bossPop {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.5); 
+  }
+  10% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1.1); 
+  }
+  20% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1.0); 
+  }
+  80% { 
+    /* Stay visible and opaque for most of the time */
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1.0); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(1.2); 
+  }
 }

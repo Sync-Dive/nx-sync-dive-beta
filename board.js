@@ -1,10 +1,11 @@
-/* board.js — DAMAGE TUNED (25) */
+/* board.js — SAFETY FILL GUARANTEE */
 (function () {
   const GS = window.gameState || (window.gameState = {});
 
-  // --- HELPERS (Standard) ---
+  // --- HELPERS ---
   function randInt(n) { return Math.floor(Math.random() * n); }
   function makeGlyphCell(type) { return { kind: "glyph", type }; }
+  
   function isGlyph(cell) { return cell && cell.kind === "glyph"; }
   function isPoison(cell) { return cell && cell.kind === "poison"; }
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
@@ -12,12 +13,12 @@
   function isLava(cell) { return cell && cell.kind === "lava"; }
   function isHazard(cell) { return (isPoison(cell) || isFrozen(cell) || isJunk(cell) || isLava(cell)); }
   function isEmpty(cell) { return cell == null; }
-  function canFall(cell) { return cell && !isHazard(cell); } 
+  function isStatic(cell) { return isHazard(cell); } 
+  function canFall(cell) { return isGlyph(cell); }
 
   window.isGlyph = isGlyph; window.isPoison = isPoison; window.isFrozen = isFrozen;
   window.isJunk = isJunk; window.isLava = isLava; window.isEmpty = isEmpty;
 
-  // --- INIT ---
   function initBoard(N) {
     GS.GRID_SIZE = N;
     const board = Array.from({ length: N }, () => Array.from({ length: N }, () => null));
@@ -39,19 +40,13 @@
     if (!isGlyph(cell)) return [];
     const t = cell.type;
     let out = [];
-    // Horizontal
     let temp = [{ r, c }];
-    let x = c - 1;
-    while (x >= 0 && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x--; }
-    x = c + 1;
-    while (x < N && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
+    let x = c - 1; while (x >= 0 && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x--; }
+    x = c + 1; while (x < N && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
     if (temp.length >= 3) out = out.concat(temp);
-    // Vertical
     temp = [{ r, c }];
-    let y = r - 1;
-    while (y >= 0 && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y--; }
-    y = r + 1;
-    while (y < N && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
+    let y = r - 1; while (y >= 0 && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y--; }
+    y = r + 1; while (y < N && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
     if (temp.length >= 3) out = out.concat(temp);
     return out;
   }
@@ -59,18 +54,13 @@
   function findAllMatches() {
     const N = GS.GRID_SIZE;
     const matches = {};
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         const m = checkMatchAtOnBoard(GS.board, r, c);
-        if (m.length >= 3) {
-          for (const pos of m) matches[`${pos.r}-${pos.c}`] = pos;
-        }
-      }
+        if (m.length >= 3) for (const pos of m) matches[`${pos.r}-${pos.c}`] = pos;
     }
     return matches;
   }
 
-  // --- HAZARDS & GRAVITY ---
   function cleanHazardsAdjacentTo(matches) {
     const N = GS.GRID_SIZE;
     const neighborsOffsets = [[-1, 0], [1, 0], [0, -1], [0, 1]]; 
@@ -80,9 +70,7 @@
         const nr = r + dr; const nc = c + dc;
         if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
           const neighbor = GS.board[nr][nc];
-          if (isHazard(neighbor) && !isJunk(neighbor)) { 
-             GS.board[nr][nc] = null; 
-          }
+          if (isHazard(neighbor) && !isJunk(neighbor)) GS.board[nr][nc] = null; 
         }
       });
     }
@@ -90,46 +78,39 @@
 
   function clearMatchesAndHazards(matches) {
     cleanHazardsAdjacentTo(matches);
-    for (const key in matches) {
-      const { r, c } = matches[key];
-      GS.board[r][c] = null;
-    }
+    for (const key in matches) { const { r, c } = matches[key]; GS.board[r][c] = null; }
   }
 
-  async function applyGravity() {
+  // --- GRAVITY ---
+  async function applyGravityAndRefill() {
     const N = GS.GRID_SIZE;
+    // 1. Gravity
     for (let c = 0; c < N; c++) {
       for (let r = N - 1; r >= 0; r--) {
-        if (GS.board[r][c] !== null) continue;
-        let mover = null;
-        for (let rr = r - 1; rr >= 0; rr--) {
-          const cell = GS.board[rr][c];
-          if (!cell) continue;
-          if (canFall(cell)) { mover = { rr, cell }; break; }
-          if (isHazard(cell)) break;
-        }
-        if (mover) {
-          GS.board[r][c] = mover.cell;
-          GS.board[mover.rr][c] = null;
+        if (GS.board[r][c] === null) {
+          for (let k = r - 1; k >= 0; k--) {
+            const above = GS.board[k][c];
+            if (isStatic(above)) break;
+            if (canFall(above)) {
+              GS.board[r][c] = above;
+              GS.board[k][c] = null;
+              break; 
+            }
+          }
         }
       }
     }
-  }
-
-  async function refillBoard() {
-    const N = GS.GRID_SIZE;
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
-        if (GS.board[r][c] === null) GS.board[r][c] = makeGlyphCell(randInt(4));
-      }
+    // 2. Refill
+    for (let c = 0; c < N; c++) {
+       for (let r = 0; r < N; r++) {
+           if (GS.board[r][c] === null) {
+               GS.board[r][c] = makeGlyphCell(randInt(4));
+           }
+       }
     }
   }
 
-  async function forceFill() {
-      await applyGravity();
-      await refillBoard();
-  }
-
+  // --- HAZARDS ---
   function neighbors(r, c) {
     const N = GS.GRID_SIZE;
     return [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([rr,cc])=>rr>=0&&rr<N&&cc>=0&&cc<N);
@@ -153,50 +134,47 @@
     if(g.length) { const [rr,cc] = g[randInt(g.length)]; GS.board[rr][cc] = {kind:"lava"}; }
   }
 
-  // --- RESOLVE ---
-  async function resolveMatchesOnceAndRefill() {
+  // --- PROCESS ---
+  async function resolveMatchesOnce() {
     const matches = findAllMatches();
     if (Object.keys(matches).length === 0) return false;
-
     const matchCount = Object.keys(matches).length;
     if (window.Abilities && window.Abilities.applyHeroDamage) {
-        // BALANCE UPDATE: 25 Damage per tile
         const dmg = matchCount * 25; 
         window.Abilities.applyHeroDamage("board", dmg); 
-        
         GS.aeliaCharge = Math.min(10, GS.aeliaCharge + (matchCount > 3 ? 2 : 1));
         GS.noctaCharge = Math.min(12, GS.noctaCharge + 1);
         GS.vyraCharge = Math.min(15, GS.vyraCharge + 1);
         GS.ionaCharge = Math.min(18, GS.ionaCharge + 1);
     }
-
     clearMatchesAndHazards(matches);
-    await forceFill(); 
-    if (window.delay) await window.delay(200);
-    if (window.UI && UI.renderBoard) UI.renderBoard();
-    spreadPoison();
-    spreadLava();
+    spreadPoison(); spreadLava();
     return true;
   }
 
   async function processBoardUntilStable() {
     let changed = true;
-    let safeguard = 0;
-    while (changed && safeguard < 12) {
-      changed = await resolveMatchesOnceAndRefill();
-      safeguard++;
+    let loopCount = 0;
+    while (loopCount < 10) {
+      await applyGravityAndRefill();
+      if (window.UI && UI.renderBoard) UI.renderBoard();
+      if (window.delay) await window.delay(150);
+      changed = await resolveMatchesOnce();
+      if (!changed) break; 
+      loopCount++;
     }
+    // SAFETY: RUN ONE LAST REFILL TO ENSURE NO GHOST HOLES
+    await applyGravityAndRefill();
+    if (window.UI && UI.renderBoard) UI.renderBoard();
   }
 
   function performSwap(r1, c1, r2, c2) {
     const a = GS.board[r1][c1];
     const b = GS.board[r2][c2];
-    GS.board[r1][c1] = b;
-    GS.board[r2][c2] = a;
+    GS.board[r1][c1] = b; GS.board[r2][c2] = a;
     const matches = findAllMatches();
     if (Object.keys(matches).length === 0) {
-      GS.board[r1][c1] = a;
-      GS.board[r2][c2] = b;
+      GS.board[r1][c1] = a; GS.board[r2][c2] = b;
       return false;
     }
     return true;
@@ -222,14 +200,7 @@
   }
 
   window.Board = {
-    initBoard,
-    checkMatchAtOnBoard,
-    findAllMatches,
-    resolveMatchesOnceAndRefill,
-    processBoardUntilStable,
-    processAllMatches: processBoardUntilStable, 
-    performSwap,
-    forceFill,
-    shuffleBoard
+    initBoard, checkMatchAtOnBoard, findAllMatches, processBoardUntilStable, processAllMatches: processBoardUntilStable, 
+    performSwap, forceFill: applyGravityAndRefill, shuffleBoard
   };
 })();
