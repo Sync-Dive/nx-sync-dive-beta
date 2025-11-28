@@ -7,20 +7,18 @@
   <link rel="stylesheet" href="style.css" />
   <style>
     /* =========================================
-       CYBERPUNK MAP STYLES (No External Images)
+       CYBERPUNK MAP STYLES
        ========================================= */
     :root {
       --neon-blue: #0ea5e9;
       --neon-purple: #8b5cf6;
       --neon-orange: #f97316;
       --bg-dark: #020617;
-      --panel-bg: rgba(15, 23, 42, 0.6);
       --grid-color: rgba(56, 189, 248, 0.1);
     }
 
     body#map-screen {
       background-color: var(--bg-dark);
-      /* CSS GRID PATTERN */
       background-image: 
         linear-gradient(var(--grid-color) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
@@ -34,7 +32,6 @@
       flex-direction: column;
     }
 
-    /* HEADER */
     #map-header {
       background: rgba(2, 6, 23, 0.85);
       backdrop-filter: blur(10px);
@@ -61,7 +58,6 @@
       text-shadow: 0 0 10px var(--neon-blue);
     }
 
-    /* RESOURCES */
     #map-currencies {
       display: flex;
       justify-content: center;
@@ -77,11 +73,7 @@
       text-align: center;
     }
 
-    /* NAV BUTTONS */
-    .nav-actions {
-      display: flex;
-      gap: 10px;
-    }
+    .nav-actions { display: flex; gap: 10px; }
     .nav-btn {
       background: transparent;
       border: 1px solid var(--neon-blue);
@@ -99,9 +91,7 @@
       box-shadow: 0 0 10px var(--neon-blue);
     }
 
-    /* =========================================
-       HOLOGRAPHIC RADAR (SVG)
-       ========================================= */
+    /* RADAR VISUALIZER */
     #sector-visualizer {
       height: 220px;
       width: 100%;
@@ -110,162 +100,73 @@
       align-items: center;
       position: relative;
       margin: 1rem 0;
-      pointer-events: none; /* purely visual */
+      pointer-events: none;
     }
-
-    /* The SVG glows */
     #radar-svg {
-      width: 200px;
-      height: 200px;
+      width: 200px; height: 200px;
       filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.5));
     }
-    
     .radar-ring {
-      fill: none;
-      stroke: #1e293b;
-      stroke-width: 8;
+      fill: none; stroke: #1e293b; stroke-width: 8;
       transition: stroke 0.3s, filter 0.3s;
     }
-    
-    .radar-ring.active {
-      stroke: var(--neon-blue);
-      filter: drop-shadow(0 0 8px var(--neon-blue));
-    }
-    .radar-ring.boss-zone.active {
-      stroke: var(--neon-orange);
-      filter: drop-shadow(0 0 8px var(--neon-orange));
-    }
+    .radar-ring.active { stroke: var(--neon-blue); filter: drop-shadow(0 0 8px var(--neon-blue)); }
+    .radar-ring.boss-zone.active { stroke: var(--neon-orange); filter: drop-shadow(0 0 8px var(--neon-orange)); }
 
-    /* Zone Labels overlaying the map */
     .zone-info-panel {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      text-align: center;
-      color: #94a3b8;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      position: absolute; bottom: 0; width: 100%;
+      text-align: center; color: #94a3b8; font-size: 0.8rem;
+      text-transform: uppercase; letter-spacing: 1px;
     }
-    #active-zone-name {
-      color: #fff;
-      font-weight: bold;
-      font-size: 1rem;
-      text-shadow: 0 0 10px var(--neon-blue);
-    }
+    #active-zone-name { color: #fff; font-weight: bold; font-size: 1rem; text-shadow: 0 0 10px var(--neon-blue); }
 
-    /* =========================================
-       ZONE TABS
-       ========================================= */
+    /* TABS */
     .zone-tabs-container {
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-      padding: 0 10px;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
+      display: flex; justify-content: center; gap: 5px;
+      padding: 0 10px; margin-bottom: 1rem; flex-wrap: wrap;
     }
-
     .zone-tab {
       background: rgba(30, 41, 59, 0.8);
-      border: 1px solid #475569;
-      color: #94a3b8;
-      padding: 8px 14px;
-      font-size: 0.75rem;
-      cursor: pointer;
+      border: 1px solid #475569; color: #94a3b8;
+      padding: 8px 14px; font-size: 0.75rem; cursor: pointer;
       clip-path: polygon(10% 0, 100% 0, 100% 100%, 0 100%, 0 25%);
       transition: all 0.2s;
     }
-    
-    .zone-tab:hover { border-color: #fff; }
-    
     .zone-tab.active {
       background: rgba(14, 165, 233, 0.2);
-      border-color: var(--neon-blue);
-      color: #fff;
+      border-color: var(--neon-blue); color: #fff;
       box-shadow: 0 4px 10px rgba(14, 165, 233, 0.1);
     }
 
-    /* =========================================
-       HEX GRID LAYOUT
-       ========================================= */
-    .zones-display {
-      flex: 1;
-      padding-bottom: 40px;
-    }
-
-    .zone-content {
-      display: none;
-      max-width: 600px;
-      margin: 0 auto;
-      animation: slideUp 0.3s ease-out;
-    }
+    /* GRID */
+    .zones-display { flex: 1; padding-bottom: 40px; }
+    .zone-content { display: none; max-width: 600px; margin: 0 auto; animation: slideUp 0.3s ease-out; }
     .zone-content.active { display: block; }
+    .hex-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 20px; }
 
-    .hex-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px; /* Spacing between hexes */
-      padding: 20px;
-    }
-
-    /* HEXAGON CSS */
     .hex-node {
-      position: relative;
-      width: 70px;
-      height: 80px;
+      position: relative; width: 70px; height: 80px;
       background: #1e293b;
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
-      color: #fff;
-      text-decoration: none;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.2s, background 0.2s;
+      color: #fff; text-decoration: none;
     }
-
-    /* Inner Border Trick */
     .hex-node::before {
-      content: '';
-      position: absolute;
-      top: 2px; left: 2px; right: 2px; bottom: 2px;
-      background: #0f172a;
+      content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
+      background: #0f172a; z-index: -1;
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      z-index: -1;
     }
-
-    .hex-node:hover {
-      transform: scale(1.1);
-      background: var(--neon-blue);
-    }
-    
-    /* LOCKED STATE */
-    .hex-node.locked {
-      opacity: 0.5;
-      background: #333;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-    .hex-node.locked::before { background: #1a1a1a; }
-
-    /* BOSS STATE */
+    .hex-node:hover { transform: scale(1.1); background: var(--neon-blue); }
+    .hex-node.locked { opacity: 0.5; background: #333; cursor: not-allowed; pointer-events: none; }
     .hex-node.boss { background: var(--neon-orange); }
     .hex-node.boss::before { background: #2a1005; }
-    .hex-node.boss:hover { box-shadow: 0 0 15px var(--neon-orange); }
-
-    /* COMPLETED STATE (Optional Visual) */
     .hex-node.completed .lvl-id { color: var(--neon-blue); }
 
     .lvl-id { font-size: 1.4rem; font-weight: 800; z-index: 2; }
     .lvl-label { font-size: 0.5rem; text-transform: uppercase; margin-top: -2px; z-index: 2; color: #94a3b8; }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 
@@ -298,25 +199,20 @@
       <path d="M 100,100 m -80,0 a 80,80 0 1,0 160,0 a 80,80 0 1,0 -160,0" class="radar-ring" id="ring-1" />
       <path d="M 100,100 m -96,0 a 96,96 0 1,0 192,0 a 96,96 0 1,0 -192,0" class="radar-ring" id="ring-0" />
     </svg>
-    
-    <div class="zone-info-panel">
-      SECTOR SCAN: <span id="active-zone-name">LOADING...</span>
-    </div>
+    <div class="zone-info-panel">SECTOR SCAN: <span id="active-zone-name">LOADING...</span></div>
   </div>
 
-  <div class="zone-tabs-container" id="zone-tabs">
-    </div>
-
-  <div id="zones-display" class="zones-display">
-    </div>
+  <div class="zone-tabs-container" id="zone-tabs"></div>
+  <div id="zones-display" class="zones-display"></div>
 
   <script src="state.js"></script>
   <script src="economy.js"></script>
   <script src="levels.js"></script>
+  <script src="audio.js"></script>
   
   <script>
     (function() {
-      // --- 1. SETUP DATA ---
+      // --- MAP LOGIC ---
       const ZONES = ["OUTSKIRTS", "INDUSTRIAL", "ECO-SECTOR", "HIGH-TECH", "CORE"];
       const allLevels = window.LEVELS || [];
       const unlocked = parseInt(localStorage.getItem("levelUnlocked") || "1", 10);
@@ -325,6 +221,9 @@
       const displayEl = document.getElementById("zones-display");
       const zoneNameEl = document.getElementById("active-zone-name");
 
+      // Music Init
+      if (window.AudioSys) AudioSys.playBGM('bgm_map');
+
       // Group levels
       const zoneData = [[], [], [], [], []];
       allLevels.forEach(l => {
@@ -332,22 +231,16 @@
         if(zoneData[zIndex]) zoneData[zIndex].push(l);
       });
 
-      // --- 2. RENDER UI ---
-      // Create Tabs
+      // Render
       ZONES.forEach((name, i) => {
         const tab = document.createElement("div");
         tab.className = "zone-tab";
         tab.innerText = `Z${i+1}: ${name}`;
         tab.onclick = () => switchZone(i);
-        tab.id = `tab-${i}`;
         tabsEl.appendChild(tab);
 
-        // Create Container
         const container = document.createElement("div");
         container.className = "zone-content";
-        container.id = `content-${i}`;
-        
-        // Create Grid
         const grid = document.createElement("div");
         grid.className = "hex-grid";
         
@@ -362,10 +255,7 @@
           if(lvl.id < unlocked) classes += " completed";
           
           hex.className = classes;
-          hex.innerHTML = `
-            <span class="lvl-id">${lvl.id}</span>
-            <span class="lvl-label">${isLocked ? "LOCK" : (isBoss ? "BOSS" : "SEC")}</span>
-          `;
+          hex.innerHTML = `<span class="lvl-id">${lvl.id}</span><span class="lvl-label">${isLocked?"LOCK":(isBoss?"BOSS":"SEC")}</span>`;
           
           if(!isLocked) {
             hex.onclick = () => {
@@ -376,43 +266,25 @@
               }
             };
           }
-          
           grid.appendChild(hex);
         });
-
         container.appendChild(grid);
         displayEl.appendChild(container);
       });
 
-      // --- 3. LOGIC ---
       function switchZone(idx) {
-        // Update Tabs
-        document.querySelectorAll(".zone-tab").forEach((t, i) => {
-          t.classList.toggle("active", i === idx);
-        });
-
-        // Update Grids
-        document.querySelectorAll(".zone-content").forEach((c, i) => {
-          c.classList.toggle("active", i === idx);
-        });
-
-        // Update Visualizer (SVG)
-        document.querySelectorAll(".radar-ring").forEach((r, i) => {
-          // Rings are ID'd ring-0 (outer) to ring-4 (inner)
-          // Highlight only the active one
-          r.classList.toggle("active", i === idx);
-        });
-
-        // Update Text
+        document.querySelectorAll(".zone-tab").forEach((t, i) => t.classList.toggle("active", i === idx));
+        document.querySelectorAll(".zone-content").forEach((c, i) => c.classList.toggle("active", i === idx));
+        document.querySelectorAll(".radar-ring").forEach((r, i) => r.classList.toggle("active", i === idx));
         zoneNameEl.innerText = ZONES[idx];
       }
 
-      // Initial State: Open the zone where the player currently is
+      // Default Zone
       let currentZoneIdx = Math.floor((unlocked - 1) / 10);
       if(currentZoneIdx > 4) currentZoneIdx = 4;
       switchZone(currentZoneIdx);
 
-      // --- 4. ECONOMY UPDATE ---
+      // Economy HUD
       function updateHUD() {
         if(!window.economy) return;
         economy.regenerateEnergy();
@@ -420,7 +292,6 @@
         document.getElementById("prisma-amt").textContent = economy.getPrisma();
         document.getElementById("aurum-amt").textContent = economy.getAurum();
         
-        // Timer
         const el = document.getElementById("energy-timer");
         if(economy.getEnergy() >= economy.maxEnergy) {
            el.textContent = "MAX";
@@ -438,7 +309,6 @@
       }
       setInterval(updateHUD, 1000);
       updateHUD();
-
     })();
   </script>
 </body>

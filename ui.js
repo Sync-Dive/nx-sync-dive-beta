@@ -1,4 +1,4 @@
-/* ui.js — FINAL TIMING SYNC */
+/* ui.js — FINAL SAFE & AUDIO INTEGRATED */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const IS_GAME = window.location.pathname.includes("game.html");
@@ -6,6 +6,7 @@
 
   const TILE_IMAGES = ["assets/tile_aelia.png", "assets/tile_nocta.png", "assets/tile_vyra.png", "assets/tile_iona.png"];
   
+  // CACHE BUSTER + CORRECT LAVA NAME
   const HAZARD_IMAGES = { 
       frozen: "assets/tile_deceit.png?v=103", 
       poison: "assets/tile_plague.png?v=103", 
@@ -15,7 +16,7 @@
 
   const TUTORIAL_KEY = "nx_tutorial_seen_v6";
   function launchTutorial() {
-      // Unlock if stuck
+      // Force Unlock if stuck
       if(GS.isProcessing) { GS.isProcessing = false; if(window.UI && UI.updateAbilityUI) UI.updateAbilityUI(); }
 
       if(document.getElementById("tutorial-overlay")) return;
@@ -47,6 +48,28 @@
     });
   } else { window.UI = window.UI || {}; window.UI.updateEnergyUI = function(){}; window.UI.updateStats = function(){}; window.UI.renderBoard = function(){}; window.renderBoard = function(){}; return; }
 
+  // --- BUTTON INJECTION: ? AND MUTE ---
+  function injectTutorialButton() {
+      // 1. Tutorial Button
+      const existing = document.getElementById("tut-trig"); if(existing) existing.remove();
+      const btn = document.createElement("div");
+      btn.id = "tut-trig";
+      btn.innerText = "?";
+      btn.style.cssText = `position:fixed; top:70px; right:15px; width:36px; height:36px; border:2px solid #38bdf8; color:#38bdf8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; cursor:pointer; z-index:15000; background:rgba(15,23,42,0.9); box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family:monospace; font-size:1.2rem;`;
+      btn.onclick = launchTutorial;
+      document.body.appendChild(btn);
+
+      // 2. Mute Button
+      const mute = document.createElement("div");
+      mute.id = "mute-btn";
+      mute.innerText = "🔊";
+      mute.style.cssText = `position:fixed; top:70px; right:60px; width:36px; height:36px; border:2px solid #38bdf8; color:#38bdf8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; cursor:pointer; z-index:15000; background:rgba(15,23,42,0.9); box-shadow: 0 0 10px rgba(0,0,0,0.5); font-size:1.2rem;`;
+      mute.onclick = () => { if(window.AudioSys) AudioSys.toggleMute(); };
+      document.body.appendChild(mute);
+      
+      if(window.AudioSys) AudioSys.updateMuteState();
+  }
+
   function bindAbilityklClicks() {
       const bind = (id, fnName) => {
           const el = document.getElementById(id + "-ability-ring");
@@ -57,6 +80,7 @@
                   if(GS.isProcessing) return; 
                   
                   const icon = document.getElementById(id + "-ability-icon");
+                  // Only fire if visually ready
                   if(!icon || !icon.classList.contains("ability-ready")) return;
 
                   newEl.style.background = "conic-gradient(#38bdf8 0deg, rgba(255,255,255,0.08) 0deg)";
@@ -70,16 +94,6 @@
           }
       };
       bind("aelia", "activateAelia"); bind("nocta", "activateNocta"); bind("vyra",  "activateVyra"); bind("iona",  "activateIona");
-  }
-
-  function injectTutorialButton() {
-      const existing = document.getElementById("tut-trig"); if(existing) existing.remove();
-      const btn = document.createElement("div");
-      btn.id = "tut-trig";
-      btn.innerText = "?";
-      btn.style.cssText = `position:fixed; top:70px; right:15px; width:36px; height:36px; border:2px solid #38bdf8; color:#38bdf8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; cursor:pointer; z-index:15000; background:rgba(15,23,42,0.9); box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family:monospace; font-size:1.2rem;`;
-      btn.onclick = launchTutorial;
-      document.body.appendChild(btn);
   }
 
   function initAbilityIcons() {
@@ -144,14 +158,13 @@
     });
   }
 
-  // Helpers
   function updateDiscipleBadge(){const b=el("disciple-badge-live"),c=el("disciple-chibi-live"),d=GS.disciple;if(!d)return;if(b)b.textContent="Disciple: "+d.name;if(c){c.src="assets/disciple_"+d.id.toLowerCase()+".jpg";c.onerror=function(){this.onerror=null;let f="tile_greed.png";if(d.attack==="poison")f="tile_plague.png";if(d.attack==="drain")f="tile_war.png";if(d.attack==="deceit")f="tile_deceit.png";if(d.attack==="greed")f="tile_greed.png";this.src="assets/"+f;};c.style.display="block";}}
   function updateChibiUI(){const h=el("hero-chibi-live"),d=GS.disciple;if(!h||!d)return;const m={GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"},n=m[d.id]||"aelia";h.src="assets/"+n+".png";h.onerror=function(){this.onerror=null;this.src="assets/tile_"+n+".png"};updateDiscipleBadge();}
   function updateStats(){if(!IS_GAME)return;const b=el("disciple-hp-bar"),l=el("disciple-hp-label"),m=el("moves-left");if(b&&GS.discipleHP!=null){const p=Math.max(0,GS.discipleHP/GS.discipleMaxHP);b.style.width=(p*100)+"%"}if(l&&GS.discipleHP!=null)l.textContent=GS.discipleHP+" HP";if(m)m.textContent=GS.movesLeft}
   function updateEnergyUI(){if(!window.economy)return;window.economy.regenerateEnergy();const c=window.economy.getEnergy(),m=window.economy.maxEnergy,ec=el("energy-count"),er=el("energy-regen-time");if(ec)ec.textContent=c+" / "+m;if(c>=m){if(er)er.textContent="FULL";if(window._energyInterval)clearInterval(window._energyInterval);return}function t(){const E=window.economy,L=parseInt(localStorage.getItem(E.LS_KEYS.lastEnergyAt),10)||Date.now(),R=E.regenMinutes*60000,N=L+R,l=N-Date.now();if(l<=0){E.regenerateEnergy();updateEnergyUI();return}const mm=Math.floor(l/60000),ss=Math.floor((l%60000)/1000);if(er)er.textContent=`${mm}:${ss.toString().padStart(2,'0')}`}if(window._energyInterval)clearInterval(window._energyInterval);t();window._energyInterval=setInterval(t,1000)}
   function updatePrismaUI(){const p=el("prisma-count"),a=el("aurum-count");if(window.economy){if(p)p.textContent=economy.getPrisma();if(a)a.textContent=economy.getAurum()}}
   
-  // FIX: Default time to 2500ms to match CSS
+  // DEFAULT FLASH DURATION: 2500ms
   function flashAlert(t,d=2500){
       const b=el("alert-banner");
       if(!b)return;

@@ -70,10 +70,16 @@
   }
 
   // --- ABILITIES ---
+  /* abilities.js — ADDED ABILITY SFX */
+// ...
   async function activateAelia() {
     if (GS.isProcessing || GS.aeliaCharge < 10) return;
     resetCharge("aelia");
+    
+    if(window.AudioSys) AudioSys.play('cast'); // <--- ADD THIS LINE
+    
     GS.isProcessing = true;
+    // ... rest of function
 
     try {
       const isDead = applyHeroDamage("aelia", 600);
@@ -95,6 +101,7 @@
   async function activateNocta() {
     if (GS.isProcessing || GS.noctaCharge < 12) return;
     resetCharge("nocta");
+if(window.AudioSys) AudioSys.play('cast');
     GS.isProcessing = true;
 
     try {
@@ -119,6 +126,7 @@
   async function activateVyra() {
     if (GS.isProcessing || GS.vyraCharge < 15) return;
     resetCharge("vyra");
+if(window.AudioSys) AudioSys.play('cast');
     GS.isProcessing = true;
 
     try {
@@ -144,6 +152,7 @@
   async function activateIona() {
     if (GS.isProcessing || GS.ionaCharge < 18) return;
     resetCharge("iona");
+if(window.AudioSys) AudioSys.play('cast');
     GS.isProcessing = true;
 
     try {

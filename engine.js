@@ -1,4 +1,4 @@
-/* engine.js — IMPROVED ATTACK TIMING */
+/* engine.js — V1.1 (AUDIO & TIMING) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -19,16 +19,16 @@
   }
 
   function performDiscipleAttack(type) {
+    // AUDIO: Play Warning Sound
+    if(window.AudioSys) AudioSys.play('warning');
+
     const target = getSafeRandomGlyph();
     if(target) {
         const {r, c} = target;
-        // Apply Hazard
         if (type === "poison") GS.board[r][c] = { kind: "poison" };
         else if (type === "drain") GS.board[r][c] = { kind: "lava" };
         else if (type === "deceit") GS.board[r][c] = { kind: "frozen" };
         else GS.board[r][c] = { kind: "junk" };
-        
-        // VISUAL EFFECT: Optional shake or flash on that specific tile could go here
     }
     if(window.UI && UI.renderBoard) UI.renderBoard();
   }
@@ -38,15 +38,15 @@
     const every = GS.discipleAttackRate || 3; 
     
     if (GS.turnsTaken > 0 && GS.turnsTaken % every === 0) {
-        // 1. SHOW BIG WARNING
+        // 1. VISUAL ALERT
         if (window.UI && UI.flashAlert) {
-            UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 1500);
+            UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 2500);
         }
         
-        // 2. WAIT FOR PLAYER TO READ IT (800ms delay), THEN STRIKE
+        // 2. DELAYED ATTACK (Syncs with Alert Animation)
         setTimeout(() => { 
             performDiscipleAttack(GS.disciple.attack || "greed"); 
-        }, 800);
+        }, 800); 
     }
   }
 
@@ -56,6 +56,9 @@
     victoryTriggered = true;
     GS.isProcessing = true; 
     
+    // AUDIO: Win
+    if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
+
     const reward = 20 + (GS.movesLeft * 2);
     if (window.economy) {
       if(window.economy.addPrisma) window.economy.addPrisma(reward);
@@ -94,6 +97,10 @@
     if (victoryTriggered) return;
     victoryTriggered = true;
     GS.isProcessing = true;
+    
+    // AUDIO: Lose
+    if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('lose'); }
+
     const overlay = document.getElementById("end-overlay");
     const msgEl = document.getElementById("end-message");
     const btnNext = document.getElementById("btn-next-level");
@@ -166,6 +173,9 @@
     
     GS.isProcessing = false;
     victoryTriggered = false;
+
+    // AUDIO: Start Combat Music
+    if(window.AudioSys) AudioSys.playBGM('bgm_battle');
 
     if (window.Board?.initBoard) Board.initBoard(GS.GRID_SIZE);
     

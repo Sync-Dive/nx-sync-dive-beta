@@ -1,4 +1,4 @@
-/* board.js — SAFETY FILL GUARANTEE */
+/* board.js — CRASH PROOFING & LOGIC FIXES */
 (function () {
   const GS = window.gameState || (window.gameState = {});
 
@@ -35,19 +35,29 @@
 
   // --- MATCHING ---
   function checkMatchAtOnBoard(bd, r, c) {
-    const N = bd.length;
+    if (!bd || !bd[r] || !bd[r][c]) return []; 
     const cell = bd[r][c];
     if (!isGlyph(cell)) return [];
+    const N = bd.length;
     const t = cell.type;
     let out = [];
+    
+    // Horizontal
     let temp = [{ r, c }];
-    let x = c - 1; while (x >= 0 && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x--; }
-    x = c + 1; while (x < N && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
+    let x = c - 1; 
+    while (x >= 0 && bd[r][x] && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x--; }
+    x = c + 1; 
+    while (x < N && bd[r][x] && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
     if (temp.length >= 3) out = out.concat(temp);
+
+    // Vertical
     temp = [{ r, c }];
-    let y = r - 1; while (y >= 0 && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y--; }
-    y = r + 1; while (y < N && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
+    let y = r - 1; 
+    while (y >= 0 && bd[y] && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y--; }
+    y = r + 1; 
+    while (y < N && bd[y] && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
     if (temp.length >= 3) out = out.concat(temp);
+
     return out;
   }
 
@@ -84,13 +94,14 @@
   // --- GRAVITY ---
   async function applyGravityAndRefill() {
     const N = GS.GRID_SIZE;
-    // 1. Gravity
+    // 1. Gravity (Bubble Up Empty Spots)
     for (let c = 0; c < N; c++) {
       for (let r = N - 1; r >= 0; r--) {
         if (GS.board[r][c] === null) {
+          // Look up
           for (let k = r - 1; k >= 0; k--) {
             const above = GS.board[k][c];
-            if (isStatic(above)) break;
+            if (isStatic(above)) break; // Blocked by hazard
             if (canFall(above)) {
               GS.board[r][c] = above;
               GS.board[k][c] = null;
@@ -134,10 +145,16 @@
     if(g.length) { const [rr,cc] = g[randInt(g.length)]; GS.board[rr][cc] = {kind:"lava"}; }
   }
 
-  // --- PROCESS ---
+  // --- MAIN LOOP ---
   async function resolveMatchesOnce() {
     const matches = findAllMatches();
     if (Object.keys(matches).length === 0) return false;
+
+    // AUDIO SAFE CALL
+    try {
+        if(window.AudioSys && AudioSys.play) AudioSys.play('match');
+    } catch(e) { console.warn("Audio fail", e); }
+
     const matchCount = Object.keys(matches).length;
     if (window.Abilities && window.Abilities.applyHeroDamage) {
         const dmg = matchCount * 25; 
@@ -148,30 +165,43 @@
         GS.ionaCharge = Math.min(18, GS.ionaCharge + 1);
     }
     clearMatchesAndHazards(matches);
-    spreadPoison(); spreadLava();
     return true;
   }
 
   async function processBoardUntilStable() {
-    let changed = true;
-    let loopCount = 0;
-    while (loopCount < 10) {
-      await applyGravityAndRefill();
-      if (window.UI && UI.renderBoard) UI.renderBoard();
-      if (window.delay) await window.delay(150);
-      changed = await resolveMatchesOnce();
-      if (!changed) break; 
-      loopCount++;
+    try {
+        let changed = true;
+        let loopCount = 0;
+        
+        while (loopCount < 10) {
+          await applyGravityAndRefill();
+          if (window.UI && UI.renderBoard) UI.renderBoard();
+          if (window.delay) await window.delay(150);
+          
+          changed = await resolveMatchesOnce();
+          if (!changed) break; 
+          
+          loopCount++;
+        }
+        
+        await applyGravityAndRefill();
+        if (window.UI && UI.renderBoard) UI.renderBoard();
+
+        spreadPoison();
+        spreadLava();
+        
+        if (window.UI && UI.renderBoard) UI.renderBoard();
+
+    } catch (err) {
+        console.error("BOARD CRASH RECOVERED:", err);
     }
-    // SAFETY: RUN ONE LAST REFILL TO ENSURE NO GHOST HOLES
-    await applyGravityAndRefill();
-    if (window.UI && UI.renderBoard) UI.renderBoard();
   }
 
   function performSwap(r1, c1, r2, c2) {
     const a = GS.board[r1][c1];
     const b = GS.board[r2][c2];
     GS.board[r1][c1] = b; GS.board[r2][c2] = a;
+    
     const matches = findAllMatches();
     if (Object.keys(matches).length === 0) {
       GS.board[r1][c1] = a; GS.board[r2][c2] = b;
