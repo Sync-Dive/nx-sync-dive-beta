@@ -1,4 +1,4 @@
-/* engine.js — V1.3 (STABILITY & DEFEAT FIXES) */
+/* engine.js — ENERGY DEDUCTION FIX */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -23,9 +23,7 @@
 
     const target = getSafeRandomGlyph();
     if(target) {
-        // FX: SHAKE ON IMPACT
         if (window.FX && FX.shake) FX.shake(1);
-
         const {r, c} = target;
         if (type === "poison") GS.board[r][c] = { kind: "poison" };
         else if (type === "drain") GS.board[r][c] = { kind: "lava" };
@@ -38,14 +36,9 @@
   function discipleAttackIfReady() {
     if (!GS.disciple || GS.discipleHP <= 0) return;
     const every = GS.discipleAttackRate || 3; 
-    
     if (GS.turnsTaken > 0 && GS.turnsTaken % every === 0) {
-        if (window.UI && UI.flashAlert) {
-            UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 2500);
-        }
-        setTimeout(() => { 
-            performDiscipleAttack(GS.disciple.attack || "greed"); 
-        }, 800); 
+        if (window.UI && UI.flashAlert) UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 2500);
+        setTimeout(() => { performDiscipleAttack(GS.disciple.attack || "greed"); }, 800); 
     }
   }
 
@@ -60,7 +53,9 @@
     const reward = 20 + (GS.movesLeft * 2);
     if (window.economy) {
       if(window.economy.addPrisma) window.economy.addPrisma(reward);
-      if(window.economy.addEnergy) window.economy.addEnergy(1); 
+      // NOTE: We do NOT give energy back on win, we just don't charge extra.
+      // Or if you want +1 energy on win:
+      // if(window.economy.addEnergy) window.economy.addEnergy(1); 
     }
     const nextLevelId = GS.currentLevelId + 1;
     if (window.StorageAPI?.setLevelUnlocked) StorageAPI.setLevelUnlocked(nextLevelId);
@@ -76,7 +71,14 @@
         const nextLevelExists = window.LEVELS && window.LEVELS.some(l => l.id === nextLevelId);
         if (nextLevelExists) {
             btnNext.style.display = "block";
-            btnNext.onclick = () => window.location.href = `game.html?level=${nextLevelId}`;
+            // FIX: CHARGE ENERGY FOR NEXT LEVEL
+            btnNext.onclick = () => {
+                if (window.economy && window.economy.spendEnergyForLevel()) {
+                    window.location.href = `game.html?level=${nextLevelId}`;
+                } else {
+                    if(confirm("Not enough Energy! Go to Shop?")) window.location.href = "shop.html";
+                }
+            };
         } else {
             btnNext.style.display = "none"; 
             if (msgEl) msgEl.textContent = "CAMPAIGN COMPLETE!";
@@ -100,16 +102,14 @@
 
     const overlay = document.getElementById("end-overlay");
     const msgEl = document.getElementById("end-message");
-    const imgEl = document.getElementById("end-chibi"); // Ensure we get this element
+    const imgEl = document.getElementById("end-chibi");
     const btnNext = document.getElementById("btn-next-level");
 
     if (msgEl) { msgEl.textContent = "DEFEAT"; msgEl.className = "defeat-title"; }
     if (btnNext) btnNext.style.display = "none";
 
-    // FIX: Show Disciple Image on Defeat
     if (imgEl && GS.disciple) {
         imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`;
-        // Fallback if image missing
         imgEl.onerror = function() { this.src = "assets/tile_greed.png"; };
     }
 
@@ -128,13 +128,9 @@
             GS.movesLeft--;
             GS.turnsTaken++;
             if (window.UI) { UI.updateStats(); UI.updateAbilityUI(); }
-
             if (GS.discipleHP <= 0) { await handleVictory(); return true; } 
-
             discipleAttackIfReady();
-
             if (GS.movesLeft <= 0) { handleDefeat(); return true; }
-            
             return true;
         } 
     } catch(err) { console.error(err); } finally {
@@ -159,7 +155,7 @@
       }
   }
 
-  async function bootLevel(lvlId) {
+  function bootLevel(lvlId) {
     const id = typeof lvlId === 'number' ? lvlId : window.readLevelIdFromURL();
     const lvl = (window.LEVELS || []).find((L) => L.id === id) || window.LEVELS[0];
 
@@ -183,8 +179,7 @@
 
     if (window.Board?.initBoard) {
         Board.initBoard(GS.GRID_SIZE);
-        // FIX: Clean up initial "lucky matches" before player starts
-        if(Board.processBoardUntilStable) await Board.processBoardUntilStable();
+        if(Board.processBoardUntilStable) Board.processBoardUntilStable();
     }
     
     if (window.UI) {
@@ -193,8 +188,15 @@
     }
   }
 
+  // FIX: RESTART CHARGES ENERGY
   function restartLevel() {
-      bootLevel(GS.currentLevelId);
+      if (window.economy && window.economy.spendEnergyForLevel()) {
+          bootLevel(GS.currentLevelId);
+          // Hide overlay if open
+          document.getElementById("end-overlay").style.display = "none";
+      } else {
+          if(confirm("Not enough Energy! Go to Shop?")) window.location.href = "shop.html";
+      }
   }
 
   window.Engine = { bootLevel, restartLevel, trySwap, handleVictory, requestShuffle };

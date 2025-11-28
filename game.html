@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Glyphbound: Protocol</title> <link rel="stylesheet" href="style.css" />
+  <title>Glyphbound: Protocol</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="game-root">
-    
     <div id="top-hud">
       <div id="hud-row1">
         <span class="hud-label">ENERGY:</span> <span id="energy-count" class="hud-value">--</span>
@@ -71,30 +71,38 @@
         
         <button id="btn-next-level" style="display:none; background:rgba(56,189,248,0.2); border-color:#38bdf8; margin-bottom:8px;">NEXT LEVEL</button>
         
-        <button id="btn-play-again" onclick="window.location.reload()">PLAY AGAIN</button>
+        <button id="btn-play-again" onclick="safeReload()">PLAY AGAIN</button>
+        
         <button onclick="window.location.href='map.html'">MAP</button>
         <button onclick="window.location.href='shop.html'" style="margin-top:5px; border-color:#f97316; color:#f97316;">SHOP</button>
       </div>
     </div>
   </div>
 
- 
+  <script src="globals.js"></script> 
   <script src="state.js"></script>
-  
   <script src="fx.js"></script> 
   <script src="audio.js"></script> 
-  
   <script src="levels.js"></script>
   <script src="economy.js"></script>
   <script src="items.js"></script> 
   <script src="ui.js"></script>  
-  
   <script src="board.js"></script>
   <script src="abilities.js"></script>
   <script src="input.js"></script>
   <script src="engine.js"></script>
-  
   <script src="boot.js"></script>
+  
+  <script>
+      // FIX: Secure Reload Function
+      function safeReload() {
+          if (window.economy && window.economy.spendEnergyForLevel()) {
+              window.location.reload();
+          } else {
+              if(confirm("Not enough Energy! Go to Shop?")) window.location.href = "shop.html";
+          }
+      }
+  </script>
   
 </body>
 </html>
