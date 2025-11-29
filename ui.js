@@ -1,4 +1,4 @@
-/* ui.js — FINAL: AUDIO, TUTORIAL, SAFE CLICKS, & INVENTORY */
+/* ui.js — GOLD MASTER: AUDIO, ITEMS, TUTORIAL, & VISUAL FIXES */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const IS_GAME = window.location.pathname.includes("game.html");
@@ -11,19 +11,19 @@
       "assets/tile_iona.png"
   ];
   
-  // Cache Buster V=103 to ensure images load correctly
+  // Cache Buster V=104
   const HAZARD_IMAGES = { 
-      frozen: "assets/tile_deceit.png?v=103", 
-      poison: "assets/tile_plague.png?v=103", 
-      junk:   "assets/tile_greed.png?v=103", 
-      lava:   "assets/tile_lava.png?v=103" 
+      frozen: "assets/tile_deceit.png?v=104", 
+      poison: "assets/tile_plague.png?v=104", 
+      junk:   "assets/tile_greed.png?v=104", 
+      lava:   "assets/tile_lava.png?v=104" 
   };
 
   // --- TUTORIAL LOGIC ---
-  const TUTORIAL_KEY = "nx_tutorial_seen_final";
+  const TUTORIAL_KEY = "nx_tutorial_gold";
   
   function launchTutorial() {
-      // Force unlock if game got stuck during init
+      // Emergency Unlock
       if(GS.isProcessing) { 
           GS.isProcessing = false; 
           if(window.UI && UI.updateAbilityUI) UI.updateAbilityUI(); 
@@ -45,7 +45,7 @@
             <p><strong>1. MATCH 3:</strong> Swap tiles to damage the Disciple.</p>
             <p><strong>2. HERO SKILLS:</strong> Matches charge the rings below. Tap when glowing!</p>
             <p><strong>3. HAZARDS:</strong> Match NEXT to Poison/Lava to destroy them.</p>
-            <p><strong>4. ITEMS:</strong> Use Bombs, Hourglasses, or Antidotes from the Item Bar.</p>
+            <p><strong>4. ITEMS:</strong> Use Bombs/Antidotes from the bar above.</p>
         </div>
         <button id="tut-close-btn" style="padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5);">INITIALIZE</button>
       `;
@@ -57,8 +57,6 @@
           if(UI.flashAlert) UI.flashAlert("SYSTEM READY", 1500); 
       };
   }
-  
-  // Expose to window for the ? button
   window.resetTutorial = launchTutorial;
 
   // --- INITIALIZATION ---
@@ -73,20 +71,16 @@
     window.UI.updateEnergyUI = updateEnergyUI;
     window.UI.flashAlert = flashAlert;
     window.UI.updatePrismaUI = updatePrismaUI;
-    
-    // NEW EXPORT: Inventory
     window.UI.updateItemCounts = updateItemCounts;
 
     document.addEventListener("DOMContentLoaded", () => {
       initAbilityIcons(); 
-      injectTutorialButton(); // Adds ? and Mute buttons
-      bindAbilityklClicks();  // Adds Hero click listeners safely
-      injectItemBar();        // Adds Item buttons (Bomb, etc)
+      injectTutorialButton();
+      bindAbilityklClicks();  
+      injectItemBar();        
 
-      // Check tutorial status
       if (!localStorage.getItem(TUTORIAL_KEY)) setTimeout(launchTutorial, 1000);
       
-      // Initial render delay to ensure state is ready
       setTimeout(() => { 
           updateEnergyUI(); 
           updatePrismaUI(); 
@@ -95,7 +89,6 @@
       }, 50);
     });
   } else { 
-    // Dummy exports for Map/Shop pages
     window.UI = window.UI || {}; 
     window.UI.updateEnergyUI = function(){}; 
     window.UI.updateStats = function(){}; 
@@ -104,7 +97,7 @@
     return; 
   }
 
-  // --- ITEM SYSTEM (NEW) ---
+  // --- ITEM SYSTEM ---
   function injectItemBar() {
       const bar = document.createElement("div");
       bar.id = "item-bar";
@@ -141,7 +134,6 @@
           bar.appendChild(btn);
       });
 
-      // Insert ABOVE the Ability Bar
       const abBar = document.getElementById("ability-bar");
       if(abBar) abBar.parentNode.insertBefore(bar, abBar);
   }
@@ -151,7 +143,6 @@
       const b = document.getElementById("count-bomb");
       const h = document.getElementById("count-hourglass");
       const a = document.getElementById("count-antidote");
-      
       if(b) b.innerText = economy.getItemCount('bomb');
       if(h) h.innerText = economy.getItemCount('hourglass');
       if(a) a.innerText = economy.getItemCount('antidote');
@@ -159,7 +150,6 @@
 
   // --- BUTTON INJECTION ---
   function injectTutorialButton() {
-      // 1. Tutorial Button (?)
       const existing = document.getElementById("tut-trig"); if(existing) existing.remove();
       const btn = document.createElement("div");
       btn.id = "tut-trig";
@@ -168,7 +158,6 @@
       btn.onclick = launchTutorial;
       document.body.appendChild(btn);
 
-      // 2. Mute Button (Sound)
       const mute = document.createElement("div");
       mute.id = "mute-btn";
       mute.innerText = "🔊";
@@ -179,7 +168,7 @@
       if(window.AudioSys) AudioSys.updateMuteState();
   }
 
-  // --- SAFE ABILITY BINDING ---
+  // --- ABILITY BINDING & UI ---
   function bindAbilityklClicks() {
       const bind = (id, fnName) => {
           const el = document.getElementById(id + "-ability-ring");
@@ -189,13 +178,12 @@
               newEl.onclick = () => {
                   if(GS.isProcessing) return; 
                   
-                  // Visual Check: Is it full?
                   const icon = document.getElementById(id + "-ability-icon");
                   if(!icon || !icon.classList.contains("ability-ready")) return;
 
-                  // Immediate Visual Reset
                   newEl.style.background = "conic-gradient(#38bdf8 0deg, rgba(255,255,255,0.08) 0deg)";
                   icon.classList.remove("ability-ready");
+                  icon.style.opacity = "0.5"; // Dim immediately
                   
                   if(window.Abilities && window.Abilities[fnName]) { 
                       try { window.Abilities[fnName](); } 
@@ -216,9 +204,51 @@
           const icon = el(hero + "-ability-icon");
           if(icon) { 
               icon.classList.add(`glyph-type-${typeIdx}`); 
-              icon.style.transition = "transform 0.2s, filter 0.2s"; 
+              icon.style.transition = "transform 0.2s, filter 0.2s, opacity 0.2s"; 
           }
       }
+  }
+
+  // BUG FIX APPLIED HERE
+  function updateAbilityUI() {
+    if (!IS_GAME) return;
+    const bar = el("ability-bar");
+    if (GS.isProcessing) { if(bar) bar.style.opacity = "0.7"; } 
+    else { if(bar) bar.style.opacity = "1"; }
+    
+    const A = [ 
+        { id: "aelia", charge: GS.aeliaCharge, max: 10 }, 
+        { id: "nocta", charge: GS.noctaCharge, max: 12 }, 
+        { id: "vyra",  charge: GS.vyraCharge,  max: 15 }, 
+        { id: "iona",  charge: GS.ionaCharge,  max: 18 } 
+    ];
+    
+    A.forEach((h) => {
+      const ring = el(h.id + "-ability-ring");
+      const icon = el(h.id + "-ability-icon");
+      if (!ring || !icon) return;
+      
+      const pct = Math.min(1, h.charge / h.max);
+      const deg = pct * 360;
+      
+      if (pct >= 1) {
+          // FULL: Pulse & Bright
+          ring.style.background = `conic-gradient(#38bdf8 360deg, transparent 0deg)`;
+          ring.style.boxShadow = `0 0 15px #38bdf8`;
+          icon.classList.add("ability-ready");
+          ring.classList.add("ring-ready");
+          // FIX: FORCE OPACITY TO 1
+          icon.style.opacity = "1"; 
+      } else {
+          // CHARGING: Dim & No Pulse
+          ring.style.background = `conic-gradient(#38bdf8 ${deg}deg, rgba(255,255,255,0.1) ${deg}deg)`;
+          ring.style.boxShadow = `none`;
+          icon.classList.remove("ability-ready");
+          ring.classList.remove("ring-ready");
+          // FIX: Scaling opacity
+          icon.style.opacity = String(0.3 + (pct * 0.7)); 
+      }
+    });
   }
 
   function renderBoard() {
@@ -257,31 +287,7 @@
     }
   }
 
-  function updateAbilityUI() {
-    if (!IS_GAME) return;
-    const bar = el("ability-bar");
-    if (GS.isProcessing) { if(bar) bar.style.opacity = "0.7"; } 
-    else { if(bar) bar.style.opacity = "1"; }
-    
-    const A = [ 
-        { id: "aelia", charge: GS.aeliaCharge, max: 10 }, 
-        { id: "nocta", charge: GS.noctaCharge, max: 12 }, 
-        { id: "vyra",  charge: GS.vyraCharge,  max: 15 }, 
-        { id: "iona",  charge: GS.ionaCharge,  max: 18 } 
-    ];
-    A.forEach((h) => {
-      const ring = el(h.id + "-ability-ring");
-      const icon = el(h.id + "-ability-icon");
-      if (!ring || !icon) return;
-      const pct = Math.min(1, h.charge / h.max);
-      const deg = pct * 360;
-      ring.style.background = `conic-gradient(#38bdf8 ${deg}deg, rgba(255,255,255,0.08) ${deg}deg)`;
-      if (pct >= 1) icon.classList.add("ability-ready");
-      else icon.classList.remove("ability-ready");
-    });
-  }
-
-  // --- HUD HELPERS ---
+  // ... (Keep existing HUD Helpers: updateDiscipleBadge, updateChibiUI, updateStats, updateEnergyUI, updatePrismaUI, flashAlert) ...
   function updateDiscipleBadge(){const b=el("disciple-badge-live"),c=el("disciple-chibi-live"),d=GS.disciple;if(!d)return;if(b)b.textContent="Disciple: "+d.name;if(c){c.src="assets/disciple_"+d.id.toLowerCase()+".jpg";c.onerror=function(){this.onerror=null;let f="tile_greed.png";if(d.attack==="poison")f="tile_plague.png";if(d.attack==="drain")f="tile_war.png";if(d.attack==="deceit")f="tile_deceit.png";if(d.attack==="greed")f="tile_greed.png";this.src="assets/"+f;};c.style.display="block";}}
   function updateChibiUI(){const h=el("hero-chibi-live"),d=GS.disciple;if(!h||!d)return;const m={GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"},n=m[d.id]||"aelia";h.src="assets/"+n+".png";h.onerror=function(){this.onerror=null;this.src="assets/tile_"+n+".png"};updateDiscipleBadge();}
   function updateStats(){if(!IS_GAME)return;const b=el("disciple-hp-bar"),l=el("disciple-hp-label"),m=el("moves-left");if(b&&GS.discipleHP!=null){const p=Math.max(0,GS.discipleHP/GS.discipleMaxHP);b.style.width=(p*100)+"%"}if(l&&GS.discipleHP!=null)l.textContent=GS.discipleHP+" HP";if(m)m.textContent=GS.movesLeft}

@@ -199,6 +199,23 @@ img { max-width: 100%; display: block; }
 .ability-icon { width: 70%; height: 70%; border-radius: 50%; object-fit: contain; }
 .ability-ready { transform: scale(1.1); filter: drop-shadow(0 0 12px #38bdf8); }
 .ability-label { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; }
+/* ADD TO style.css */
+
+/* PULSING RING ANIMATION */
+.ring-ready {
+    animation: ringPulse 1s infinite alternate;
+    border-color: #fff !important;
+}
+
+@keyframes ringPulse {
+    from { box-shadow: 0 0 5px #38bdf8; transform: scale(1.0); }
+    to { box-shadow: 0 0 20px #38bdf8; transform: scale(1.05); }
+}
+
+/* Dim icon by default, ui.js handles opacity */
+.ability-icon {
+    transition: opacity 0.2s, transform 0.2s;
+}
 
 /* BOTTOM BUTTONS */
 .bottom-btn {
@@ -274,4 +291,4 @@ img { max-width: 100%; display: block; }
   position: fixed; width: 6px; height: 6px; border-radius: 2px; pointer-events: none; z-index: 8000;
   animation: particleFly 0.5s forwards ease-out;
 }
-@keyframes particleFly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+@keyframes particleFly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }	

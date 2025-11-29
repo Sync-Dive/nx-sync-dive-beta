@@ -36,11 +36,19 @@
   function discipleAttackIfReady() {
     if (!GS.disciple || GS.discipleHP <= 0) return;
     const every = GS.discipleAttackRate || 3; 
+    
     if (GS.turnsTaken > 0 && GS.turnsTaken % every === 0) {
-        if (window.UI && UI.flashAlert) UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 2500);
-        setTimeout(() => { performDiscipleAttack(GS.disciple.attack || "greed"); }, 800); 
+        // TWEAK: Reduced warning time for better flow
+        if (window.UI && UI.flashAlert) {
+            UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 1500); // Was 2500
+        }
+        
+        // Match the attack timing (wait for alert to be half done)
+        setTimeout(() => { 
+            performDiscipleAttack(GS.disciple.attack || "greed"); 
+        }, 800); 
     }
-  }
+    }
 
   // --- VICTORY ---
   async function handleVictory() {

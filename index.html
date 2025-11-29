@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Glyphbound: Protocol</title> <style>
-    /* ... (Keep your existing CSS here) ... */
-    
+  <title>Glyphbound: Protocol</title>
+  <style>
     /* =========================================
        GLOBAL & RESET
        ========================================= */
@@ -76,6 +75,19 @@
       animation: pulseRing 3s infinite;
     }
 
+    /* TAGLINE STYLE */
+    .studio-tagline {
+        margin-top: 20px;
+        color: #38bdf8;
+        font-family: monospace;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+        animation: fadeIn 2s ease-in;
+    }
+
     /* =========================================
        BUTTON STYLES
        ========================================= */
@@ -137,6 +149,32 @@
         z-index: 10;
     }
 
+    /* =========================================
+       LORE OVERLAY STYLES
+       ========================================= */
+    #lore-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(2, 6, 23, 0.98); z-index: 10000;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        padding: 2rem; text-align: center;
+        animation: fadeIn 0.5s ease-out;
+    }
+    .lore-title { 
+        font-size: 1.8rem; color: #ef4444; font-weight: 900; letter-spacing: 2px; 
+        margin-bottom: 1rem; text-shadow: 0 0 15px #ef4444; 
+    }
+    .lore-text { 
+        max-width: 500px; line-height: 1.6; color: #cbd5e1; margin-bottom: 2rem; font-size: 1rem; 
+    }
+    .lore-btn {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; color: #fff;
+        padding: 1rem 3rem; font-weight: bold; border-radius: 4px; cursor: pointer;
+        text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(14,165,233,0.4);
+    }
+
+    /* =========================================
+       ANIMATIONS
+       ========================================= */
     @keyframes floatLogo {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
@@ -149,12 +187,16 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes fadeIn {
+        from { opacity: 0; } to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
   <div class="logo-wrapper">
     <img id="studio-logo" src="assets/LogoSyncStudios.png" alt="SYNC-DIVE" />
+    <div class="studio-tagline">Dream. Dive. Disrupt.</div>
     <div id="debug-msg"></div>
   </div>
 
@@ -164,6 +206,16 @@
     <div class="system-status" id="status-text">SYSTEM STANDBY...</div>
   </div>
 
+  <div id="lore-overlay">
+      <div class="lore-title">NEO SEOUL ALERT</div>
+      <div class="lore-text">
+          <p>The <strong>DISCIPLES</strong>—rogue AI constructs—have seized the city grid. They are corrupting the data flow with chaos.</p>
+          <p>As a <strong>GLYPHBOUND COMMANDER</strong>, you must link with our Heroes (Aelia, Nocta, Vyra, Iona) to purge the corruption.</p>
+          <p style="color:#38bdf8; font-weight:bold; margin-top:15px;">MATCH GLYPHS. CHARGE ABILITIES. RESTORE ORDER.</p>
+      </div>
+      <button class="lore-btn" onclick="closeLore()">ACCEPT MISSION</button>
+  </div>
+
   <script src="save_system.js"></script>
 
   <script>
@@ -171,15 +223,30 @@
     const status = document.getElementById("status-text");
     const img = document.getElementById("studio-logo");
     const debug = document.getElementById("debug-msg");
+    const lore = document.getElementById("lore-overlay");
 
-    // DATA RECOVERY FUNCTION
+    // LORE LOGIC
+    const LORE_KEY = "nx_lore_seen_v1";
+    
+    function checkLore() {
+        if(!localStorage.getItem(LORE_KEY)) {
+            lore.style.display = "flex";
+        }
+    }
+    
+    function closeLore() {
+        localStorage.setItem(LORE_KEY, "true");
+        lore.style.opacity = "0";
+        setTimeout(() => lore.style.display = "none", 500);
+    }
+    
+    // Check immediately
+    checkLore();
+
     function recoverData() {
         const code = prompt("PASTE RECOVERY CODE:");
-        if(code && window.SaveSys) {
-            SaveSys.importData(code);
-        } else if (code) {
-            alert("Save System not loaded.");
-        }
+        if(code && window.SaveSys) SaveSys.importData(code);
+        else if (code) alert("Save System not loaded.");
     }
 
     img.onerror = function() {
@@ -189,6 +256,12 @@
     };
 
     btn.onclick = () => {
+      // If Lore is open, close it first
+      if (window.getComputedStyle(lore).display === "flex") {
+          closeLore();
+          return;
+      }
+        
       btn.style.backgroundColor = "#fff";
       btn.style.color = "#000";
       status.style.color = "#0ea5e9";
